@@ -13,6 +13,7 @@
 #include <layered_hardware_epos/operating_mode_base.hpp>
 //#include <layered_hardware_epos/clear_multi_turn_mode.hpp>
 //#include <layered_hardware_epos/common_namespaces.hpp>
+#include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/velocity_mode.hpp>
 //...
 #include <ros/console.h>
@@ -194,8 +195,8 @@ private:
       // return boost::make_shared< CurrentMode >(data_, item_map);
     } else if (mode_str == "current_based_position") {
       // return boost::make_shared< CurrentBasedPositionMode >(data_, item_map);
-    } else if (mode_str == "extended_position") {
-      // return boost::make_shared< ExtendedPositionMode >(data_, item_map);
+    } else if (mode_str == "position") {
+      return boost::make_shared< PositionMode >(data_);
     } else if (mode_str == "reboot") {
       // return boost::make_shared< RebootMode >(data_);
     } else if (mode_str == "torque_disable") {
