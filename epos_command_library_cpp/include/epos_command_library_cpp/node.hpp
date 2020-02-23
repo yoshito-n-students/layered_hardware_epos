@@ -65,33 +65,32 @@ public:
     typedef Result< boost::uint64_t > ResultU64;
 
     // get device name
-    const Result< std::string > result_device_name(device_.getDeviceName());
-    if (result_device_name.isError()) {
-      return ResultU64::error(result_device_name.errorCode());
+    const Result< std::string > device_name(device_.getDeviceName());
+    if (device_name.isError()) {
+      return ResultU64::error(device_name.errorCode());
     }
 
     // find object id of the serial number according to the device name
-    const std::string device_name(*result_device_name);
     unsigned short object_id, object_sub_id;
-    if (device_name == "EPOS" || device_name == "EPOS2") {
+    if (*device_name == "EPOS" || *device_name == "EPOS2") {
       object_id = 0x2004;
       object_sub_id = 0x00;
-    } else if (device_name == "EPOS4") {
+    } else if (*device_name == "EPOS4") {
       object_id = 0x2100;
       object_sub_id = 0x01;
     } else {
       // should never reach here
-      std::cerr << "Node::getSerialNumber(): Unknown device name '" << device_name << "'"
+      std::cerr << "Node::getSerialNumber(): Unknown device name '" << *device_name << "'"
                 << std::endl;
       return ResultU64::error(0);
     }
 
     // get the serial number
     boost::uint64_t serial_number;
-    const Result< unsigned int > result_get_obj(
+    const Result< unsigned int > n_bytes_read(
         getObject(object_id, object_sub_id, &serial_number, 8));
-    if (result_get_obj.isError()) {
-      return ResultU64::error(result_get_obj.errorCode());
+    if (n_bytes_read.isError()) {
+      return ResultU64::error(n_bytes_read.errorCode());
     }
 
     return ResultU64::success(serial_number);

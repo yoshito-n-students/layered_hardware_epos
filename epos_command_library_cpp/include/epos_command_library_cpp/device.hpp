@@ -39,13 +39,13 @@ public:
   Result< void > setBaudrate(const unsigned int baudrate) {
     typedef Result< void > ResultV;
 
-    const Result< unsigned int > result_timeout(getTimeout());
-    if (result_timeout.isError()) {
-      return ResultV::error(result_timeout.errorCode());
+    const Result< unsigned int > timeout(getTimeout());
+    if (timeout.isError()) {
+      return ResultV::error(timeout.errorCode());
     }
 
     unsigned int error_code;
-    if (VCS_SetProtocolStackSettings(handle_.get(), baudrate, *result_timeout, &error_code) == 0) {
+    if (VCS_SetProtocolStackSettings(handle_.get(), baudrate, *timeout, &error_code) == 0) {
       return ResultV::error(error_code);
     }
 
@@ -63,13 +63,13 @@ public:
   Result< void > setTimeout(const unsigned int timeout_ms) {
     typedef Result< void > ResultV;
 
-    const Result< unsigned int > result_baudrate(getBaudrate());
-    if (result_baudrate.isError()) {
-      return ResultV::error(result_baudrate.errorCode());
+    const Result< unsigned int > baudrate(getBaudrate());
+    if (baudrate.isError()) {
+      return ResultV::error(baudrate.errorCode());
     }
 
     unsigned int error_code;
-    if (VCS_SetProtocolStackSettings(handle_.get(), *result_baudrate, timeout_ms, &error_code) ==
+    if (VCS_SetProtocolStackSettings(handle_.get(), *baudrate, timeout_ms, &error_code) ==
         0) {
       return ResultV::error(error_code);
     }
