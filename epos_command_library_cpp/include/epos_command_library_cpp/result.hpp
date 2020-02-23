@@ -11,13 +11,16 @@
 
 namespace epos_command_library_cpp {
 
-template < typename T > class Result {
+// ==================================================
+// base class wrapping epos command lib's error code
+
+class ResultBase {
 public:
-  virtual ~Result() {}
+  virtual ~ResultBase() {}
 
-  bool isError() const { return value_ == boost::none; }
+  virtual bool isError() const = 0;
 
-  bool isSuccess() const { return value_ != boost::none; }
+  virtual bool isSuccess() const = 0;
 
   unsigned int errorCode() const {
     if (isSuccess()) {
@@ -35,14 +38,35 @@ public:
     return info;
   }
 
-  const T &unwrap() const {
+protected:
+  // allow to construct only to child classes
+  ResultBase() {}
+
+protected:
+  unsigned int error_code_;
+};
+
+// ==========================================
+// utility class holding value or error code
+
+template < typename T > class Result : public ResultBase {
+public:
+  typedef T Value;
+
+  virtual ~Result() {}
+
+  bool isError() const { return value_ == boost::none; }
+
+  bool isSuccess() const { return value_ != boost::none; }
+
+  const Value &unwrap() const {
     if (isError()) {
       throw std::runtime_error(errorInfo());
     }
     return *value_;
   }
 
-  const T &operator*() const { return unwrap(); }
+  const Value &operator*() const { return unwrap(); }
 
   // ================
   // factory methods
@@ -64,6 +88,49 @@ private:
 
 private:
   boost::optional< T > value_;
+  unsigned int error_code_;
+};
+
+// void specialization
+template <> class Result< void > : public ResultBase {
+public:
+  typedef void Value;
+
+  virtual ~Result() {}
+
+  bool isError() const { return is_error_; }
+
+  bool isSuccess() const { return !is_error_; }
+
+  void unwrap() const {
+    if (isError()) {
+      throw std::runtime_error(errorInfo());
+    }
+  }
+
+  void operator*() const { unwrap(); }
+
+  // ================
+  // factory methods
+
+  static Result< void > success() {
+    Result< void > result;
+    result.is_error_ = false;
+    return result;
+  }
+
+  static Result< void > error(const unsigned int error_code) {
+    Result< void > result;
+    result.is_error_ = true;
+    result.error_code_ = error_code;
+    return result;
+  }
+
+private:
+  Result() {}
+
+private:
+  bool is_error_;
   unsigned int error_code_;
 };
 } // namespace epos_command_library_cpp
