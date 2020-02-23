@@ -41,6 +41,26 @@ public:
                : ResultUS::error(error_code);
   }
 
+  Result< unsigned short > getApplicationNumber() const {
+    typedef Result< unsigned short > ResultUS;
+    unsigned short hw_version, sw_version, app_num, app_version;
+    unsigned int error_code;
+    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
+                          &app_version, &error_code) != 0
+               ? ResultUS::success(app_num)
+               : ResultUS::error(error_code);
+  }
+
+  Result< unsigned short > getApplicationVersion() const {
+    typedef Result< unsigned short > ResultUS;
+    unsigned short hw_version, sw_version, app_num, app_version;
+    unsigned int error_code;
+    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
+                          &app_version, &error_code) != 0
+               ? ResultUS::success(app_version)
+               : ResultUS::error(error_code);
+  }
+
   Result< boost::uint64_t > getSerialNumber() const {
     typedef Result< boost::uint64_t > ResultU64;
 

@@ -78,13 +78,16 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
 
     boost::uint64_t serial_number(*node.getSerialNumber());
     const unsigned short hw_version(*node.getHardwareVersion()),
-        sw_version(*node.getSoftwareVersion());
+        sw_version(*node.getSoftwareVersion()), app_num(*node.getApplicationNumber()),
+        app_version(*node.getApplicationVersion());
 
     const std::string indent(n_indent, '\t');
     std::cout << indent << "Node Id: " << std::dec << path.node_id << std::endl;
     std::cout << indent << "\tSerial number: 0x" << std::hex << serial_number << std::endl;
     std::cout << indent << "\tHardware version: 0x" << std::hex << hw_version << std::endl;
     std::cout << indent << "\tSoftware version: 0x" << std::hex << sw_version << std::endl;
+    std::cout << indent << "\tApplication number: 0x" << std::hex << app_num << std::endl;
+    std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
   } catch (const std::runtime_error &error) {
     // catching an error indicates the node does not exist. nothing to show.
   }
