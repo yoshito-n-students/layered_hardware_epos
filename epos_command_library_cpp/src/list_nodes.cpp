@@ -101,7 +101,7 @@ void listNodesOnPort(const Path &path, const Configs &configs, const std::size_t
   const std::vector< unsigned int > baudrates(
       *eclc::getBaudrateList(path.device, path.protocol_stack, path.interface, path.port));
   std::cout << indent << "\tBaudrates:" << std::endl;
-  BOOST_FOREACH (unsigned int baudrate, baudrates) {
+  BOOST_FOREACH (const unsigned int baudrate, baudrates) {
     std::cout << indent << "\t\t" << std::dec << baudrate << std::endl;
   }
 
