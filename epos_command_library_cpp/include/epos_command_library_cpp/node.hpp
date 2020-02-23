@@ -21,6 +21,8 @@ public:
   // =====
   // info
 
+  unsigned short getId() const { return id_; }
+
   Result< unsigned short > getHardwareVersion() const {
     typedef Result< unsigned short > ResultUS;
     unsigned short hw_version, sw_version, app_num, app_version;
