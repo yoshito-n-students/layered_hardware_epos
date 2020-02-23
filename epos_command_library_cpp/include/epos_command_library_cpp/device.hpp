@@ -22,7 +22,7 @@ public:
   static Result< Device > open(const std::string &device_name,
                                const std::string &protocol_stack_name,
                                const std::string &interface_name, const std::string &port_name) {
-    typedef Result< Device > result;
+    typedef Result< Device > ResultD;
     Device device;
     unsigned int error_code;
     device.handle_.reset(VCS_OpenDevice(const_cast< char * >(device_name.c_str()),
@@ -30,98 +30,98 @@ public:
                                         const_cast< char * >(interface_name.c_str()),
                                         const_cast< char * >(port_name.c_str()), &error_code),
                          Device::close);
-    return device.handle_ ? result::success(device) : result::error(error_code);
+    return device.handle_ ? ResultD::success(device) : ResultD::error(error_code);
   }
 
   // ========================
   // protocol stack settings
 
-  Result< unsigned int > setBaudrate(const unsigned int baudrate) {
-    typedef Result< unsigned int > result;
+  Result< void > setBaudrate(const unsigned int baudrate) {
+    typedef Result< void > ResultV;
 
-    const result result_timeout(getTimeout());
+    const Result< unsigned int > result_timeout(getTimeout());
     if (result_timeout.isError()) {
-      return result_timeout;
+      return ResultV::error(result_timeout.errorCode());
     }
 
     unsigned int error_code;
     if (VCS_SetProtocolStackSettings(handle_.get(), baudrate, *result_timeout, &error_code) == 0) {
-      return result::error(error_code);
+      return ResultV::error(error_code);
     }
 
-    return result::success(baudrate);
+    return ResultV::success();
   }
 
   Result< unsigned int > getBaudrate() const {
-    typedef Result< unsigned int > result;
+    typedef Result< unsigned int > ResultUI;
     unsigned int baudrate, timeout, error_code;
     return VCS_GetProtocolStackSettings(handle_.get(), &baudrate, &timeout, &error_code) != 0
-               ? result::success(baudrate)
-               : result::error(error_code);
+               ? ResultUI::success(baudrate)
+               : ResultUI::error(error_code);
   }
 
-  Result< unsigned int > setTimeout(const unsigned int timeout_ms) {
-    typedef Result< unsigned int > result;
+  Result< void > setTimeout(const unsigned int timeout_ms) {
+    typedef Result< void > ResultV;
 
-    const result result_baudrate(getBaudrate());
+    const Result< unsigned int > result_baudrate(getBaudrate());
     if (result_baudrate.isError()) {
-      return result_baudrate;
+      return ResultV::error(result_baudrate.errorCode());
     }
 
     unsigned int error_code;
     if (VCS_SetProtocolStackSettings(handle_.get(), *result_baudrate, timeout_ms, &error_code) ==
         0) {
-      return result::error(error_code);
+      return ResultV::error(error_code);
     }
 
-    return result::success(timeout_ms);
+    return ResultV::success();
   }
 
   Result< unsigned int > getTimeout() const {
-    typedef Result< unsigned int > result;
+    typedef Result< unsigned int > ResultUI;
     unsigned int baudrate, timeout, error_code;
     return VCS_GetProtocolStackSettings(handle_.get(), &baudrate, &timeout, &error_code) != 0
-               ? result::success(timeout)
-               : result::error(error_code);
+               ? ResultUI::success(timeout)
+               : ResultUI::error(error_code);
   }
 
   // ============
   // information
 
   Result< std::string > getDeviceName() const {
-    typedef Result< std::string > result;
+    typedef Result< std::string > ResultS;
     char buffer[256];
     unsigned int error_code;
     return VCS_GetDeviceName(handle_.get(), buffer, 256, &error_code) != 0
-               ? result::success(buffer)
-               : result::error(error_code);
+               ? ResultS::success(buffer)
+               : ResultS::error(error_code);
   }
 
   Result< std::string > getProtocolStackName() const {
-    typedef Result< std::string > result;
+    typedef Result< std::string > ResultS;
     char buffer[256];
     unsigned int error_code;
     return VCS_GetProtocolStackName(handle_.get(), buffer, 256, &error_code) != 0
-               ? result::success(buffer)
-               : result::error(error_code);
+               ? ResultS::success(buffer)
+               : ResultS::error(error_code);
   }
 
   Result< std::string > getInterfaceName() const {
-    typedef Result< std::string > result;
+    typedef Result< std::string > ResultS;
     char buffer[256];
     unsigned int error_code;
     return VCS_GetInterfaceName(handle_.get(), buffer, 256, &error_code) != 0
-               ? result::success(buffer)
-               : result::error(error_code);
+               ? ResultS::success(buffer)
+               : ResultS::error(error_code);
   }
 
   Result< std::string > getPortName() const {
-    typedef Result< std::string > result;
+    typedef Result< std::string > ResultS;
     char buffer[256];
     unsigned int error_code;
     return VCS_GetPortName(handle_.get(), buffer, 256, &error_code) != 0
-               ? result::success(buffer)
-               : result::error(error_code);
+               ? ResultS::success(buffer)
+               : ResultS::error(error_code);
   }
 
 private:
