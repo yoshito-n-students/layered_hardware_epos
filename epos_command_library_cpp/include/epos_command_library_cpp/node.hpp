@@ -290,6 +290,25 @@ public:
                : ResultV::error(error_code);
   }
 
+  // ==============
+  // position mode
+
+  Result< void > activatePositionMode() {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_ActivatePositionMode(device_.handle_.get(), id_, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setPositionMust(const long position_must) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetPositionMust(device_.handle_.get(), id_, position_must, &error_code)
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
   // ======================
   // profile velocity mode
 
@@ -305,6 +324,25 @@ public:
     typedef Result< void > ResultV;
     unsigned int error_code;
     return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity, &error_code)
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  // ==============
+  // velocity mode
+
+  Result< void > activateVelocityMode() {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_ActivateVelocityMode(device_.handle_.get(), id_, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setVelocityMust(const long velocity_must) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetVelocityMust(device_.handle_.get(), id_, velocity_must, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
