@@ -53,6 +53,7 @@ bool parseConfigs(const int argc, const char *const argv[], Configs *const confi
     std::cerr << "Error caught on parsing configs: " << error.what() << std::endl;
     return false;
   }
+  return true;
 }
 
 // ===============================
