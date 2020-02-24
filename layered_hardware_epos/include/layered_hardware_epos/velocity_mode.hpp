@@ -3,10 +3,15 @@
 
 #include <limits>
 
+#include <epos_command_library_cpp/exception.hpp>
+#include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/epos_actuator_data.hpp>
 #include <layered_hardware_epos/operating_mode_base.hpp>
+#include <ros/console.h>
 #include <ros/duration.h>
 #include <ros/time.h>
+
+#include <boost/math/special_functions/fpclassify.hpp> // for isnan()
 
 namespace layered_hardware_epos {
 
@@ -25,18 +30,25 @@ public:
   }
 
   virtual void read(const ros::Time &time, const ros::Duration &period) {
-    /*
-    TODO: read actuator states
-    data_->pos = data_->node.getPosition();
-    data_->vel = data_->node.getVelocity();
-    data_->eff = data_->node.getEffort();
-    */
-   }
+    try {
+      data_->pos = *data_->node.getPosition(data_->count_per_revolution);
+      data_->vel = *data_->node.getVelocity();
+      data_->eff = *data_->node.getTorque(data_->torque_constant);
+    } catch (const eclc::Exception &error) {
+      ROS_ERROR_STREAM("VelocityMode::read(): " << error.what());
+    }
+  }
 
   virtual void write(const ros::Time &time, const ros::Duration &period) {
-    if (isNotNaN(data_->vel_cmd) && areNotEqual(data_->vel_cmd, prev_vel_cmd_)) {
-      // data_->node.setVelocityMust();
+    if (boost::math::isnan(data_->vel_cmd) || data_->vel_cmd == prev_vel_cmd_) {
+      return;
+    }
+
+    try {
+      data_->node.setVelocityMust(data_->vel_cmd);
       prev_vel_cmd_ = data_->vel_cmd;
+    } catch (const eclc::Exception &error) {
+      ROS_ERROR_STREAM("VelocityMode::write(): " << error.what());
     }
   }
 
