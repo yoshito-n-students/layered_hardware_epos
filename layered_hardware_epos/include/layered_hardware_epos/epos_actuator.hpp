@@ -11,6 +11,7 @@
 #include <hardware_interface/controller_info.h>
 #include <hardware_interface/robot_hw.h>
 #include <layered_hardware_epos/common_namespaces.hpp>
+#include <layered_hardware_epos/current_mode.hpp>
 #include <layered_hardware_epos/operating_mode_base.hpp>
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/velocity_mode.hpp>
@@ -199,7 +200,7 @@ private:
     if (mode_str == "clear_multi_turn") {
       // return boost::make_shared< ClearMultiTurnMode >(data_);
     } else if (mode_str == "current") {
-      // return boost::make_shared< CurrentMode >(data_, item_map);
+      return boost::make_shared< CurrentMode >(data_);
     } else if (mode_str == "current_based_position") {
       // return boost::make_shared< CurrentBasedPositionMode >(data_, item_map);
     } else if (mode_str == "position") {
