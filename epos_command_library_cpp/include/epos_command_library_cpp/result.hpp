@@ -1,10 +1,10 @@
 #ifndef EPOS_COMMAND_LIBRARY_CPP_RESULT_HPP
 #define EPOS_COMMAND_LIBRARY_CPP_RESULT_HPP
 
-#include <stdexcept>
 #include <string>
 
 #include <epos_command_library/Definitions.h>
+#include <epos_command_library_cpp/exception.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
@@ -24,7 +24,7 @@ public:
 
   unsigned int errorCode() const {
     if (isSuccess()) {
-      throw std::runtime_error("No error code");
+      throw NoErrorCodeException("No error code");
     }
     return error_code_;
   }
@@ -32,8 +32,8 @@ public:
   std::string errorInfo() const {
     char info[255];
     if (VCS_GetErrorInfo(errorCode(), info, 255) == 0) {
-      throw std::runtime_error("VCS_GetErrorInfo() failed with error code '" +
-                               boost::lexical_cast< std::string >(error_code_) + "'");
+      throw NoErrorInfoException("No info for the error code '" +
+                                 boost::lexical_cast< std::string >(error_code_) + "'");
     }
     return info;
   }
@@ -61,7 +61,7 @@ public:
 
   const Value &unwrap() const {
     if (isError()) {
-      throw std::runtime_error(errorInfo());
+      throw NoValueException(errorInfo());
     }
     return *value_;
   }
@@ -104,7 +104,7 @@ public:
 
   void unwrap() const {
     if (isError()) {
-      throw std::runtime_error(errorInfo());
+      throw NoValueException(errorInfo());
     }
   }
 

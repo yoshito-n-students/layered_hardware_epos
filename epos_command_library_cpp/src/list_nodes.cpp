@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <epos_command_library_cpp/device.hpp>
+#include <epos_command_library_cpp/exception.hpp>
 #include <epos_command_library_cpp/node.hpp>
 #include <epos_command_library_cpp/selection.hpp>
 
@@ -88,7 +89,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     std::cout << indent << "\tSoftware version: 0x" << std::hex << sw_version << std::endl;
     std::cout << indent << "\tApplication number: 0x" << std::hex << app_num << std::endl;
     std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
-  } catch (const std::runtime_error &error) {
+  } catch (const eclc::Exception &error) {
     // catching an error indicates the node does not exist. nothing to show.
   }
 }
@@ -163,7 +164,7 @@ void listAllNodes(const Configs &configs, const std::size_t n_indent = 0) {
     BOOST_FOREACH (const std::string &device, devices) {
       listNodesOnDevice(Path(device), configs, n_indent);
     }
-  } catch (const std::runtime_error &error) {
+  } catch (const eclc::Exception &error) {
     std::cerr << "Error caught on listing nodes: " << error.what() << std::endl;
   }
 }
