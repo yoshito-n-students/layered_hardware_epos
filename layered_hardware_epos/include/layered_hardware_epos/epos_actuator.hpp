@@ -10,12 +10,10 @@
 #include <hardware_interface/actuator_state_interface.h>
 #include <hardware_interface/controller_info.h>
 #include <hardware_interface/robot_hw.h>
+#include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/operating_mode_base.hpp>
-//#include <layered_hardware_epos/clear_multi_turn_mode.hpp>
-//#include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/velocity_mode.hpp>
-//...
 #include <ros/console.h>
 #include <ros/duration.h>
 #include <ros/names.h>
@@ -46,11 +44,19 @@ public:
 
   bool init(const std::string &name, const eclc::Device &device, hi::RobotHW *const hw,
             const ros::NodeHandle &param_nh) {
-    // dynamixel id from param
+    // epos node id from param
     int id;
     if (!param_nh.getParam("id", id)) {
       ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '" << param_nh.resolveName("id")
                                                                      << "'");
+      return false;
+    }
+
+    // encoder count per resolution from param
+    int count_per_revolution;
+    if (!param_nh.getParam("count_per_revolution", count_per_revolution)) {
+      ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
+                       << param_nh.resolveName("count_per_revolution") << "'");
       return false;
     }
 
@@ -63,7 +69,8 @@ public:
     }
 
     // allocate data structure
-    data_.reset(new EposActuatorData(name, eclc::Node(device, id), torque_constant));
+    data_.reset(
+        new EposActuatorData(name, eclc::Node(device, id), count_per_revolution, torque_constant));
 
     // register actuator states & commands to corresponding hardware interfaces
     const hi::ActuatorStateHandle state_handle(data_->name, &data_->pos, &data_->vel, &data_->eff);

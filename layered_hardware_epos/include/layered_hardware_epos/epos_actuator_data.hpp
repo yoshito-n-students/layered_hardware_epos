@@ -12,15 +12,18 @@
 namespace layered_hardware_epos {
 
 struct EposActuatorData {
-  EposActuatorData(const std::string &_name, const eclc::Node &_node, const double _torque_constant)
-      : name(_name), node(_node), torque_constant(_torque_constant), pos(0.), vel(0.), eff(0.),
-        pos_cmd(0.), vel_cmd(0.), eff_cmd(0.) {}
+  EposActuatorData(const std::string &_name, const eclc::Node &_node,
+                   const int _count_per_revolution, const double _torque_constant)
+      : name(_name), node(_node), count_per_revolution(_count_per_revolution),
+        torque_constant(_torque_constant), pos(0.), vel(0.), eff(0.), pos_cmd(0.), vel_cmd(0.),
+        eff_cmd(0.) {}
 
   // handles
   const std::string name;
   eclc::Node node;
 
   // params
+  const int count_per_revolution;
   const double torque_constant;
 
   // states
