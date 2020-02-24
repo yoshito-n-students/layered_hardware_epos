@@ -1,6 +1,7 @@
 #ifndef EPOS_COMMAND_LIBRARY_CPP_NODE_HPP
 #define EPOS_COMMAND_LIBRARY_CPP_NODE_HPP
 
+#include <cmath> // for M_PI
 #include <string>
 #include <vector>
 
@@ -272,6 +273,17 @@ public:
                : ResultI::error(error_code);
   }
 
+  Result< double > getPosition(const int count_per_revolution) const {
+    // TODO:
+    // this method assumes unit of raw position is counts of the encoder,
+    // which is the default setting of EPOS. Handle other unit settings.
+    typedef Result< double > ResultD;
+    const Result< int > position_is(getPositionIs());
+    return position_is.isSuccess()
+               ? ResultD::success(2. * M_PI * *position_is / count_per_revolution)
+               : ResultD::error(position_is.errorCode());
+  }
+
   Result< int > getVelocityIs() const {
     typedef Result< int > ResultI;
     int velocity_is;
@@ -281,6 +293,16 @@ public:
                : ResultI::error(error_code);
   }
 
+  Result< double > getVelocity() const {
+    // TODO:
+    // this method assumes unit of raw velocity is rpm,
+    // which is the default setting of EPOS. Handle other unit settings.
+    typedef Result< double > ResultD;
+    const Result< int > velocity_is(getVelocityIs());
+    return velocity_is.isSuccess() ? ResultD::success(M_PI * *velocity_is / 30.)
+                                   : ResultD::error(velocity_is.errorCode());
+  }
+
   Result< short > getCurrentIs() const {
     typedef Result< short > ResultS;
     short current_is;
@@ -288,6 +310,20 @@ public:
     return VCS_GetCurrentIs(device_.handle_.get(), id_, &current_is, &error_code) != 0
                ? ResultS::success(current_is)
                : ResultS::error(error_code);
+  }
+
+  Result< double > getCurrent() const {
+    typedef Result< double > ResultD;
+    const Result< short > current_is(getCurrentIs()); // mA
+    return current_is.isSuccess() ? ResultD::success(*current_is / 1000.)
+                                  : ResultD::error(current_is.errorCode());
+  }
+
+  Result< double > getTorque(const double torque_constant) const {
+    typedef Result< double > ResultD;
+    const ResultD current(getCurrent());
+    return current.isSuccess() ? ResultD::success(*current * torque_constant)
+                               : ResultD::error(current.errorCode());
   }
 
   // ======================
@@ -301,14 +337,23 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > moveToPosition(const long target_position, const bool absolute,
-                                const bool immediately) {
+  Result< void > moveToPosition(const long target_position, const bool absolute = true,
+                                const bool immediately = true) {
     typedef Result< void > ResultV;
     unsigned int error_code;
     return VCS_MoveToPosition(device_.handle_.get(), id_, target_position, absolute ? 1 : 0,
                               immediately ? 1 : 0, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
+  }
+
+  Result< void > moveToPosition(const double target_position, const int count_per_revolution,
+                                const bool absolute = true, const bool immediately = true) {
+    // TODO:
+    // this method assumes unit of raw position is counts of the encoder,
+    // which is the default setting of EPOS. Handle other unit settings.
+    return moveToPosition(static_cast< long >(target_position / (2. * M_PI) * count_per_revolution),
+                          absolute, immediately);
   }
 
   // ==============
@@ -330,6 +375,10 @@ public:
                : ResultV::error(error_code);
   }
 
+  Result< void > setPositionMust(const double position_must, const int count_per_revolution) {
+    return setPositionMust(static_cast< long >(position_must / (2. * M_PI) * count_per_revolution));
+  }
+
   // ======================
   // profile velocity mode
 
@@ -347,6 +396,10 @@ public:
     return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
+  }
+
+  Result< void > moveWithVelocity(const double target_velocity) {
+    return moveWithVelocity(static_cast< long >(target_velocity / (2. * M_PI) * 3600.));
   }
 
   // ==============
@@ -368,6 +421,10 @@ public:
                : ResultV::error(error_code);
   }
 
+  Result< void > setVelocityMust(const double velocity_must) {
+    return setVelocityMust(static_cast< long >(velocity_must / (2. * M_PI) * 3600.));
+  }
+
   // =============
   // current mode
 
@@ -385,6 +442,14 @@ public:
     return VCS_SetCurrentMust(device_.handle_.get(), id_, current_must, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
+  }
+
+  Result< void > setCurrentMust(const double current_must) {
+    return setCurrentMust(static_cast< short >(current_must * 1000.));
+  }
+
+  Result< void > setTorqueMust(const double torque_must, const double torque_constant) {
+    return setCurrentMust(torque_must / torque_constant);
   }
 
 private:
