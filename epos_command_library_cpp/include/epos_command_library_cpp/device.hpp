@@ -1,6 +1,7 @@
 #ifndef EPOS_COMMAND_LIBRARY_CPP_DEVICE_HPP
 #define EPOS_COMMAND_LIBRARY_CPP_DEVICE_HPP
 
+#include <iostream>
 #include <string>
 
 #include <epos_command_library/Definitions.h>
@@ -147,8 +148,15 @@ private:
   static void close(void *const handle) {
     unsigned int error_code;
     if (VCS_CloseDevice(handle, &error_code) == 0) {
-      // deleter of shared_ptr must not throw
-      // TODO: print error info
+      // get error info
+      std::string error_info;
+      try {
+        error_info = Result< void >::error(error_code).errorInfo();
+      } catch (const NoErrorInfoException &ex) {
+        error_info = ex.what();
+      }
+      // just print error info because the deleter of a shared_ptr must not throw
+      std::cerr << "Device::close(): Failed to close a device handle: " << error_info << std::endl;
     }
   }
 
