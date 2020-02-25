@@ -6,7 +6,7 @@
 #include <epos_command_library_cpp/exception.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/epos_actuator_data.hpp>
-#include <layered_hardware_epos/operating_mode_base.hpp>
+#include <layered_hardware_epos/operation_mode_base.hpp>
 #include <ros/console.h>
 #include <ros/duration.h>
 #include <ros/time.h>
@@ -15,9 +15,9 @@
 
 namespace layered_hardware_epos {
 
-class CurrentMode : public OperatingModeBase {
+class CurrentMode : public OperationModeBase {
 public:
-  CurrentMode(const EposActuatorDataPtr &data) : OperatingModeBase("current", data) {}
+  CurrentMode(const EposActuatorDataPtr &data) : OperationModeBase("current", data) {}
 
   virtual void starting() {
     try {

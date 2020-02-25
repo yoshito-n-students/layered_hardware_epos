@@ -1,5 +1,5 @@
-#ifndef LAYERED_HARDWARE_EPOS_OPERATING_MODE_BASE_HPP
-#define LAYERED_HARDWARE_EPOS_OPERATING_MODE_BASE_HPP
+#ifndef LAYERED_HARDWARE_EPOS_OPERATION_MODE_BASE_HPP
+#define LAYERED_HARDWARE_EPOS_OPERATION_MODE_BASE_HPP
 
 #include <string>
 
@@ -11,12 +11,12 @@
 
 namespace layered_hardware_epos {
 
-class OperatingModeBase {
+class OperationModeBase {
 public:
-  OperatingModeBase(const std::string &name, const EposActuatorDataPtr &data)
+  OperationModeBase(const std::string &name, const EposActuatorDataPtr &data)
       : name_(name), data_(data) {}
 
-  virtual ~OperatingModeBase() {}
+  virtual ~OperationModeBase() {}
 
   std::string getName() const { return name_; }
 
@@ -34,8 +34,8 @@ protected:
   const EposActuatorDataPtr data_;
 };
 
-typedef boost::shared_ptr< OperatingModeBase > OperatingModePtr;
-typedef boost::shared_ptr< const OperatingModeBase > OperatingModeConstPtr;
+typedef boost::shared_ptr< OperationModeBase > OperationModePtr;
+typedef boost::shared_ptr< const OperationModeBase > OperationModeConstPtr;
 } // namespace layered_hardware_epos
 
 #endif

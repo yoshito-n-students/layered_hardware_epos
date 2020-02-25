@@ -6,16 +6,16 @@
 #include <epos_command_library_cpp/exception.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/epos_actuator_data.hpp>
-#include <layered_hardware_epos/operating_mode_base.hpp>
+#include <layered_hardware_epos/operation_mode_base.hpp>
 #include <ros/console.h>
 #include <ros/duration.h>
 #include <ros/time.h>
 
 namespace layered_hardware_epos {
 
-class ResetMode : public OperatingModeBase {
+class ResetMode : public OperationModeBase {
 public:
-  ResetMode(const EposActuatorDataPtr &data) : OperatingModeBase("reset", data) {}
+  ResetMode(const EposActuatorDataPtr &data) : OperationModeBase("reset", data) {}
 
   virtual void starting() {
     try {

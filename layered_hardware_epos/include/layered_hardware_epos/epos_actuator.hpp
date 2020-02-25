@@ -13,7 +13,7 @@
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/current_mode.hpp>
 #include <layered_hardware_epos/disable_mode.hpp>
-#include <layered_hardware_epos/operating_mode_base.hpp>
+#include <layered_hardware_epos/operation_mode_base.hpp>
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/profile_position_mode.hpp>
 #include <layered_hardware_epos/profile_velocity_mode.hpp>
@@ -39,11 +39,11 @@ public:
   virtual ~EposActuator() {
     // finalize the present mode
     if (present_mode_) {
-      ROS_INFO_STREAM("EposActuator::~EposActuator(): Stopping operating mode '"
+      ROS_INFO_STREAM("EposActuator::~EposActuator(): Stopping operation mode '"
                       << present_mode_->getName() << "' for actuator '" << data_->name
                       << "' (id: " << data_->node.getId() << ")");
       present_mode_->stopping();
-      present_mode_ = OperatingModePtr();
+      present_mode_ = OperationModePtr();
     }
   }
 
@@ -89,12 +89,12 @@ public:
       return false;
     }
 
-    // make operating mode map from ros-controller name to dynamixel's operating mode
+    // make operation mode map from ros-controller name to EPOS's operation mode
     typedef std::map< std::string, std::string > ModeNameMap;
     ModeNameMap mode_name_map;
-    if (!param_nh.getParam("operating_mode_map", mode_name_map)) {
+    if (!param_nh.getParam("operation_mode_map", mode_name_map)) {
       ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("operating_mode_map") << "'");
+                       << param_nh.resolveName("operation_mode_map") << "'");
       return false;
     }
 
@@ -103,7 +103,7 @@ public:
 
   bool prepareSwitch(const std::list< hi::ControllerInfo > &starting_controller_list,
                      const std::list< hi::ControllerInfo > &stopping_controller_list) {
-    // check if switching is possible by counting number of operating modes after switching
+    // check if switching is possible by counting number of operation modes after switching
 
     // number of modes before switching
     std::size_t n_modes(present_mode_ ? 1 : 0);
@@ -111,7 +111,7 @@ public:
     // number of modes after stopping controllers
     if (n_modes != 0) {
       BOOST_FOREACH (const hi::ControllerInfo &stopping_controller, stopping_controller_list) {
-        const std::map< std::string, OperatingModePtr >::const_iterator mode_to_stop(
+        const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
             mode_map_.find(stopping_controller.name));
         if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
           n_modes = 0;
@@ -122,14 +122,14 @@ public:
 
     // number of modes after starting controllers
     BOOST_FOREACH (const hi::ControllerInfo &starting_controller, starting_controller_list) {
-      const std::map< std::string, OperatingModePtr >::const_iterator mode_to_start(
+      const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
           mode_map_.find(starting_controller.name));
       if (mode_to_start != mode_map_.end() && mode_to_start->second) {
         ++n_modes;
       }
     }
 
-    // assert 0 or 1 operating modes. multiple modes are impossible.
+    // assert 0 or 1 operation modes. multiple modes are impossible.
     if (n_modes != 0 && n_modes != 1) {
       ROS_ERROR_STREAM("EposActuator::prepareSwitch(): "
                        << data_->nodeDescription() << ": Rejected unfeasible controller switching");
@@ -141,30 +141,30 @@ public:
 
   void doSwitch(const std::list< hi::ControllerInfo > &starting_controller_list,
                 const std::list< hi::ControllerInfo > &stopping_controller_list) {
-    // stop actuator's operating mode according to stopping controller list
+    // stop actuator's operation mode according to stopping controller list
     if (present_mode_) {
       BOOST_FOREACH (const hi::ControllerInfo &stopping_controller, stopping_controller_list) {
-        const std::map< std::string, OperatingModePtr >::const_iterator mode_to_stop(
+        const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
             mode_map_.find(stopping_controller.name));
         if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
           ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
-                                                       << ": Stopping operating mode '"
+                                                       << ": Stopping operation mode '"
                                                        << present_mode_->getName() << "'");
           present_mode_->stopping();
-          present_mode_ = OperatingModePtr();
+          present_mode_ = OperationModePtr();
           break;
         }
       }
     }
 
-    // start actuator's operating modes according to starting controllers
+    // start actuator's operation modes according to starting controllers
     if (!present_mode_) {
       BOOST_FOREACH (const hi::ControllerInfo &starting_controller, starting_controller_list) {
-        const std::map< std::string, OperatingModePtr >::const_iterator mode_to_start(
+        const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
             mode_map_.find(starting_controller.name));
         if (mode_to_start != mode_map_.end() && mode_to_start->second) {
           ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
-                                                       << ": Starting operating mode '"
+                                                       << ": Starting operation mode '"
                                                        << mode_to_start->second->getName() << "'");
           present_mode_ = mode_to_start->second;
           present_mode_->starting();
@@ -198,7 +198,7 @@ private:
     return true;
   }
 
-  OperatingModePtr makeOperatingMode(const std::string &mode_str,
+  OperationModePtr makeOperationMode(const std::string &mode_str,
                                      const std::map< std::string, int > &item_map) {
     if (mode_str == "current") {
       return boost::make_shared< CurrentMode >(data_);
@@ -215,18 +215,18 @@ private:
     } else if (mode_str == "velocity") {
       return boost::make_shared< VelocityMode >(data_);
     } else {
-      ROS_ERROR_STREAM("EposActuator::makeOperatingMode(): " << data_->nodeDescription()
-                                                             << ": Unknown operating mode name '"
+      ROS_ERROR_STREAM("EposActuator::makeOperationMode(): " << data_->nodeDescription()
+                                                             << ": Unknown operation mode name '"
                                                              << mode_str << "'");
-      return OperatingModePtr();
+      return OperationModePtr();
     }
   }
 
 private:
   EposActuatorDataPtr data_;
 
-  std::map< std::string, OperatingModePtr > mode_map_;
-  OperatingModePtr present_mode_;
+  std::map< std::string, OperationModePtr > mode_map_;
+  OperationModePtr present_mode_;
 };
 
 typedef boost::shared_ptr< EposActuator > EposActuatorPtr;
