@@ -3,7 +3,6 @@
 
 #include <cmath> // for M_PI
 #include <string>
-#include <vector>
 
 #include <epos_command_library/Definitions.h>
 #include <epos_command_library_cpp/device.hpp>
