@@ -17,6 +17,7 @@
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/profile_position_mode.hpp>
 #include <layered_hardware_epos/profile_velocity_mode.hpp>
+#include <layered_hardware_epos/reset_mode.hpp>
 #include <layered_hardware_epos/velocity_mode.hpp>
 #include <ros/console.h>
 #include <ros/duration.h>
@@ -209,8 +210,8 @@ private:
       return boost::make_shared< ProfilePositionMode >(data_);
     } else if (mode_str == "profile_velocity") {
       return boost::make_shared< ProfileVelocityMode >(data_);
-    } else if (mode_str == "reboot") {
-      // return boost::make_shared< RebootMode >(data_);
+    } else if (mode_str == "reset") {
+      return boost::make_shared< ResetMode >(data_);
     } else if (mode_str == "velocity") {
       return boost::make_shared< VelocityMode >(data_);
     } else {
