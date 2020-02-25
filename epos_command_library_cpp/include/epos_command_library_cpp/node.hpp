@@ -264,66 +264,71 @@ public:
   // =============
   // motion info
 
+  // TODO:
+  // the following methods assume units of raw position, velocity, and current
+  // are counts-of-the-encoder, rpm, and mA, which is the default setting of EPOS.
+  // handle other unit settings.
+
+  // get position in counts of encoder
   Result< int > getPositionIs() const {
     typedef Result< int > ResultI;
-    int position_is;
+    int position_count;
     unsigned int error_code;
-    return VCS_GetPositionIs(device_.handle_.get(), id_, &position_is, &error_code) != 0
-               ? ResultI::success(position_is)
+    return VCS_GetPositionIs(device_.handle_.get(), id_, &position_count, &error_code) != 0
+               ? ResultI::success(position_count)
                : ResultI::error(error_code);
   }
 
+  // get position in rad
   Result< double > getPosition(const int count_per_revolution) const {
-    // TODO:
-    // this method assumes unit of raw position is counts of the encoder,
-    // which is the default setting of EPOS. Handle other unit settings.
     typedef Result< double > ResultD;
-    const Result< int > position_is(getPositionIs());
-    return position_is.isSuccess()
-               ? ResultD::success(2. * M_PI * *position_is / count_per_revolution)
-               : ResultD::error(position_is.errorCode());
+    const Result< int > position_count(getPositionIs());
+    return position_count.isSuccess()
+               ? ResultD::success(2. * M_PI * *position_count / count_per_revolution)
+               : ResultD::error(position_count.errorCode());
   }
 
+  // get velocity in rpm
   Result< int > getVelocityIs() const {
     typedef Result< int > ResultI;
-    int velocity_is;
+    int velocity_rpm;
     unsigned int error_code;
-    return VCS_GetVelocityIs(device_.handle_.get(), id_, &velocity_is, &error_code) != 0
-               ? ResultI::success(velocity_is)
+    return VCS_GetVelocityIs(device_.handle_.get(), id_, &velocity_rpm, &error_code) != 0
+               ? ResultI::success(velocity_rpm)
                : ResultI::error(error_code);
   }
 
+  // get velocity in rad/s
   Result< double > getVelocity() const {
-    // TODO:
-    // this method assumes unit of raw velocity is rpm,
-    // which is the default setting of EPOS. Handle other unit settings.
     typedef Result< double > ResultD;
-    const Result< int > velocity_is(getVelocityIs());
-    return velocity_is.isSuccess() ? ResultD::success(M_PI * *velocity_is / 30.)
-                                   : ResultD::error(velocity_is.errorCode());
+    const Result< int > velocity_rpm(getVelocityIs());
+    return velocity_rpm.isSuccess() ? ResultD::success(M_PI * *velocity_rpm / 30.)
+                                    : ResultD::error(velocity_rpm.errorCode());
   }
 
+  // get current in mA
   Result< short > getCurrentIs() const {
     typedef Result< short > ResultS;
-    short current_is;
+    short current_ma;
     unsigned int error_code;
-    return VCS_GetCurrentIs(device_.handle_.get(), id_, &current_is, &error_code) != 0
-               ? ResultS::success(current_is)
+    return VCS_GetCurrentIs(device_.handle_.get(), id_, &current_ma, &error_code) != 0
+               ? ResultS::success(current_ma)
                : ResultS::error(error_code);
   }
 
+  // get current in A
   Result< double > getCurrent() const {
     typedef Result< double > ResultD;
-    const Result< short > current_is(getCurrentIs()); // mA
-    return current_is.isSuccess() ? ResultD::success(*current_is / 1000.)
-                                  : ResultD::error(current_is.errorCode());
+    const Result< short > current_ma(getCurrentIs());
+    return current_ma.isSuccess() ? ResultD::success(*current_ma / 1000.)
+                                  : ResultD::error(current_ma.errorCode());
   }
 
   Result< double > getTorque(const double torque_constant) const {
     typedef Result< double > ResultD;
-    const ResultD current(getCurrent());
-    return current.isSuccess() ? ResultD::success(*current * torque_constant)
-                               : ResultD::error(current.errorCode());
+    const ResultD current_a(getCurrent());
+    return current_a.isSuccess() ? ResultD::success(*current_a * torque_constant)
+                                 : ResultD::error(current_a.errorCode());
   }
 
   // ======================
@@ -337,23 +342,71 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > moveToPosition(const long target_position, const bool absolute = true,
-                                const bool immediately = true) {
+  Result< void > moveToPosition(const long target_position_count, const bool absolute,
+                                const bool immediately) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_MoveToPosition(device_.handle_.get(), id_, target_position, absolute ? 1 : 0,
+    return VCS_MoveToPosition(device_.handle_.get(), id_, target_position_count, absolute ? 1 : 0,
                               immediately ? 1 : 0, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  Result< void > moveToPosition(const double target_position, const int count_per_revolution,
-                                const bool absolute = true, const bool immediately = true) {
-    // TODO:
-    // this method assumes unit of raw position is counts of the encoder,
-    // which is the default setting of EPOS. Handle other unit settings.
-    return moveToPosition(static_cast< long >(target_position / (2. * M_PI) * count_per_revolution),
-                          absolute, immediately);
+  Result< void > moveToPosition(const double target_position_rad, const int count_per_revolution,
+                                const bool absolute, const bool immediately) {
+    return moveToPosition(
+        static_cast< long >(target_position_rad / (2. * M_PI) * count_per_revolution), absolute,
+        immediately);
+  }
+
+  Result< void > setPositionProfile(const unsigned int profile_velocity_rpm,
+                                    const unsigned int profile_acceleration_rpmps,
+                                    const unsigned int profile_deceleration_rpmps) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetPositionProfile(device_.handle_.get(), id_, profile_velocity_rpm,
+                                  profile_acceleration_rpmps, profile_deceleration_rpmps,
+                                  &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setPositionProfile(const double profile_velocity_radps,
+                                    const double profile_acceleration_radps2,
+                                    const double profile_deceleration_radps2) {
+    return setPositionProfile(
+        static_cast< unsigned int >(profile_velocity_radps / M_PI * 30.),
+        static_cast< unsigned int >(profile_acceleration_radps2 / M_PI * 30.),
+        static_cast< unsigned int >(profile_deceleration_radps2 / M_PI * 30.));
+  }
+
+  Result< void > getPositionProfile(unsigned int *const profile_velocity_rpm,
+                                    unsigned int *const profile_acceleration_rpmps,
+                                    unsigned int *const profile_deceleration_rpmps) const {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_GetPositionProfile(device_.handle_.get(), id_, profile_velocity_rpm,
+                                  profile_acceleration_rpmps, profile_deceleration_rpmps,
+                                  &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > getPositionProfile(double *const profile_velocity_radps,
+                                    double *const profile_acceleration_radps2,
+                                    double *const profile_deceleration_radps2) const {
+    typedef Result< void > ResultV;
+
+    unsigned int vel_rpm, acc_rpmps, dec_rpmps;
+    const ResultV result_get(getPositionProfile(&vel_rpm, &acc_rpmps, &dec_rpmps));
+    if (result_get.isError()) {
+      return ResultV::error(result_get.errorCode());
+    }
+
+    *profile_velocity_radps = vel_rpm * M_PI / 30.;
+    *profile_acceleration_radps2 = acc_rpmps * M_PI / 30.;
+    *profile_deceleration_radps2 = dec_rpmps * M_PI / 30.;
+    return ResultV::success();
   }
 
   // ==============
@@ -367,16 +420,17 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setPositionMust(const long position_must) {
+  Result< void > setPositionMust(const long position_must_count) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetPositionMust(device_.handle_.get(), id_, position_must, &error_code)
+    return VCS_SetPositionMust(device_.handle_.get(), id_, position_must_count, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  Result< void > setPositionMust(const double position_must, const int count_per_revolution) {
-    return setPositionMust(static_cast< long >(position_must / (2. * M_PI) * count_per_revolution));
+  Result< void > setPositionMust(const double position_must_rad, const int count_per_revolution) {
+    return setPositionMust(
+        static_cast< long >(position_must_rad / (2. * M_PI) * count_per_revolution));
   }
 
   // ======================
@@ -390,16 +444,58 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > moveWithVelocity(const long target_velocity) {
+  Result< void > moveWithVelocity(const long target_velocity_rpm) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity, &error_code)
+    return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity_rpm, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  Result< void > moveWithVelocity(const double target_velocity) {
-    return moveWithVelocity(static_cast< long >(target_velocity / (2. * M_PI) * 3600.));
+  Result< void > moveWithVelocity(const double target_velocity_radps) {
+    return moveWithVelocity(static_cast< long >(target_velocity_radps / M_PI * 30.));
+  }
+
+  Result< void > setVelocityProfile(const unsigned int profile_acceleration_rpmps,
+                                    const unsigned int profile_deceleration_rpmps) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetVelocityProfile(device_.handle_.get(), id_, profile_acceleration_rpmps,
+                                  profile_deceleration_rpmps, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setVelocityProfile(const double profile_acceleration_radps2,
+                                    const double profile_deceleration_radps2) {
+    return setVelocityProfile(
+        static_cast< unsigned int >(profile_acceleration_radps2 / M_PI * 30.),
+        static_cast< unsigned int >(profile_deceleration_radps2 / M_PI * 30.));
+  }
+
+  Result< void > getVelocityProfile(unsigned int *const profile_acceleration_rpmps,
+                                    unsigned int *const profile_deceleration_rpmps) const {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_GetVelocityProfile(device_.handle_.get(), id_, profile_acceleration_rpmps,
+                                  profile_deceleration_rpmps, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > getVelocityProfile(double *const profile_acceleration_radps2,
+                                    double *const profile_deceleration_radps2) const {
+    typedef Result< void > ResultV;
+
+    unsigned int acc_rpmps, dec_rpmps;
+    const ResultV result_get(getVelocityProfile(&acc_rpmps, &dec_rpmps));
+    if (result_get.isError()) {
+      return ResultV::error(result_get.errorCode());
+    }
+
+    *profile_acceleration_radps2 = acc_rpmps * M_PI / 30.;
+    *profile_deceleration_radps2 = dec_rpmps * M_PI / 30.;
+    return ResultV::success();
   }
 
   // ==============
@@ -413,16 +509,16 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setVelocityMust(const long velocity_must) {
+  Result< void > setVelocityMust(const long velocity_must_rpm) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetVelocityMust(device_.handle_.get(), id_, velocity_must, &error_code)
+    return VCS_SetVelocityMust(device_.handle_.get(), id_, velocity_must_rpm, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  Result< void > setVelocityMust(const double velocity_must) {
-    return setVelocityMust(static_cast< long >(velocity_must / (2. * M_PI) * 3600.));
+  Result< void > setVelocityMust(const double velocity_must_radps) {
+    return setVelocityMust(static_cast< long >(velocity_must_radps / M_PI * 30.));
   }
 
   // =============
@@ -436,16 +532,16 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setCurrentMust(const short current_must) {
+  Result< void > setCurrentMust(const short current_must_ma) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetCurrentMust(device_.handle_.get(), id_, current_must, &error_code)
+    return VCS_SetCurrentMust(device_.handle_.get(), id_, current_must_ma, &error_code)
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  Result< void > setCurrentMust(const double current_must) {
-    return setCurrentMust(static_cast< short >(current_must * 1000.));
+  Result< void > setCurrentMust(const double current_must_a) {
+    return setCurrentMust(static_cast< short >(current_must_a * 1000.));
   }
 
   Result< void > setTorqueMust(const double torque_must, const double torque_constant) {
