@@ -256,7 +256,7 @@ public:
     typedef Result< double > ResultD;
     const Result< int > position_count(getPositionIs());
     return position_count.isSuccess()
-               ? ResultD::success(2. * M_PI * *position_count / count_per_revolution)
+               ? ResultD::success(countToRad(*position_count, count_per_revolution))
                : ResultD::error(position_count.errorCode());
   }
 
@@ -274,7 +274,7 @@ public:
   Result< double > getVelocity() const {
     typedef Result< double > ResultD;
     const Result< int > velocity_rpm(getVelocityIs());
-    return velocity_rpm.isSuccess() ? ResultD::success(M_PI * *velocity_rpm / 30.)
+    return velocity_rpm.isSuccess() ? ResultD::success(rpmToRadps(*velocity_rpm))
                                     : ResultD::error(velocity_rpm.errorCode());
   }
 
@@ -292,14 +292,14 @@ public:
   Result< double > getCurrent() const {
     typedef Result< double > ResultD;
     const Result< short > current_ma(getCurrentIs());
-    return current_ma.isSuccess() ? ResultD::success(*current_ma / 1000.)
+    return current_ma.isSuccess() ? ResultD::success(maToA(*current_ma))
                                   : ResultD::error(current_ma.errorCode());
   }
 
   Result< double > getTorque(const double torque_constant) const {
     typedef Result< double > ResultD;
     const ResultD current_a(getCurrent());
-    return current_a.isSuccess() ? ResultD::success(*current_a * torque_constant)
+    return current_a.isSuccess() ? ResultD::success(aToN(*current_a, torque_constant))
                                  : ResultD::error(current_a.errorCode());
   }
 
@@ -326,9 +326,8 @@ public:
 
   Result< void > moveToPosition(const double target_position_rad, const int count_per_revolution,
                                 const bool absolute, const bool immediately) {
-    return moveToPosition(
-        static_cast< long >(target_position_rad / (2. * M_PI) * count_per_revolution), absolute,
-        immediately);
+    return moveToPosition(radToCount(target_position_rad, count_per_revolution), absolute,
+                          immediately);
   }
 
   Result< void > setPositionProfile(const unsigned int profile_velocity_rpm,
@@ -346,10 +345,9 @@ public:
   Result< void > setPositionProfile(const double profile_velocity_radps,
                                     const double profile_acceleration_radps2,
                                     const double profile_deceleration_radps2) {
-    return setPositionProfile(
-        static_cast< unsigned int >(profile_velocity_radps / M_PI * 30.),
-        static_cast< unsigned int >(profile_acceleration_radps2 / M_PI * 30.),
-        static_cast< unsigned int >(profile_deceleration_radps2 / M_PI * 30.));
+    return setPositionProfile(static_cast< unsigned int >(radpsToRpm(profile_velocity_radps)),
+                              static_cast< unsigned int >(radpsToRpm(profile_acceleration_radps2)),
+                              static_cast< unsigned int >(radpsToRpm(profile_deceleration_radps2)));
   }
 
   Result< void > getPositionProfile(unsigned int *const profile_velocity_rpm,
@@ -375,9 +373,9 @@ public:
       return ResultV::error(result_get.errorCode());
     }
 
-    *profile_velocity_radps = vel_rpm * M_PI / 30.;
-    *profile_acceleration_radps2 = acc_rpmps * M_PI / 30.;
-    *profile_deceleration_radps2 = dec_rpmps * M_PI / 30.;
+    *profile_velocity_radps = rpmToRadps(vel_rpm);
+    *profile_acceleration_radps2 = rpmToRadps(acc_rpmps);
+    *profile_deceleration_radps2 = rpmToRadps(dec_rpmps);
     return ResultV::success();
   }
 
@@ -401,8 +399,7 @@ public:
   }
 
   Result< void > setPositionMust(const double position_must_rad, const int count_per_revolution) {
-    return setPositionMust(
-        static_cast< long >(position_must_rad / (2. * M_PI) * count_per_revolution));
+    return setPositionMust(radToCount(position_must_rad, count_per_revolution));
   }
 
   // ======================
@@ -425,7 +422,7 @@ public:
   }
 
   Result< void > moveWithVelocity(const double target_velocity_radps) {
-    return moveWithVelocity(static_cast< long >(target_velocity_radps / M_PI * 30.));
+    return moveWithVelocity(radpsToRpm(target_velocity_radps));
   }
 
   Result< void > setVelocityProfile(const unsigned int profile_acceleration_rpmps,
@@ -440,9 +437,8 @@ public:
 
   Result< void > setVelocityProfile(const double profile_acceleration_radps2,
                                     const double profile_deceleration_radps2) {
-    return setVelocityProfile(
-        static_cast< unsigned int >(profile_acceleration_radps2 / M_PI * 30.),
-        static_cast< unsigned int >(profile_deceleration_radps2 / M_PI * 30.));
+    return setVelocityProfile(static_cast< unsigned int >(radpsToRpm(profile_acceleration_radps2)),
+                              static_cast< unsigned int >(radpsToRpm(profile_deceleration_radps2)));
   }
 
   Result< void > getVelocityProfile(unsigned int *const profile_acceleration_rpmps,
@@ -465,8 +461,8 @@ public:
       return ResultV::error(result_get.errorCode());
     }
 
-    *profile_acceleration_radps2 = acc_rpmps * M_PI / 30.;
-    *profile_deceleration_radps2 = dec_rpmps * M_PI / 30.;
+    *profile_acceleration_radps2 = rpmToRadps(acc_rpmps);
+    *profile_deceleration_radps2 = rpmToRadps(dec_rpmps);
     return ResultV::success();
   }
 
@@ -490,7 +486,7 @@ public:
   }
 
   Result< void > setVelocityMust(const double velocity_must_radps) {
-    return setVelocityMust(static_cast< long >(velocity_must_radps / M_PI * 30.));
+    return setVelocityMust(radpsToRpm(velocity_must_radps));
   }
 
   // =============
@@ -513,12 +509,35 @@ public:
   }
 
   Result< void > setCurrentMust(const double current_must_a) {
-    return setCurrentMust(static_cast< short >(current_must_a * 1000.));
+    return setCurrentMust(aToMa(current_must_a));
   }
 
   Result< void > setTorqueMust(const double torque_must, const double torque_constant) {
-    return setCurrentMust(torque_must / torque_constant);
+    return setCurrentMust(nToA(torque_must, torque_constant));
   }
+
+  // ================
+  // unit conversion
+
+  static double countToRad(const long count, const int count_per_revolution) {
+    return 2. * M_PI * count / count_per_revolution;
+  }
+
+  static long radToCount(const double rad, const int count_per_revolution) {
+    return static_cast< long >(rad / (2. * M_PI) * count_per_revolution);
+  }
+
+  static double rpmToRadps(const long rpm) { return rpm * M_PI / 30.; }
+
+  static long radpsToRpm(const double radps) { return static_cast< long >(radps / M_PI * 30.); }
+
+  static double maToA(const short ma) { return ma / 1000.; }
+
+  static short aToMa(const double a) { return static_cast< short >(a * 1000.); }
+
+  static double aToN(const double a, const double torque_constant) { return a * torque_constant; }
+
+  static double nToA(const double n, const double torque_constant) { return n / torque_constant; }
 
 private:
   Device device_;
