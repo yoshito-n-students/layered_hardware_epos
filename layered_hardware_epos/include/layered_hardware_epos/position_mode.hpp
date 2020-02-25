@@ -31,7 +31,7 @@ public:
 
       has_started_ = true;
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("PositionMode::starting(): " << getNodeDescription() << ": "
+      ROS_ERROR_STREAM("PositionMode::starting(): " << data_->nodeDescription() << ": "
                                                     << error.what());
       has_started_ = false;
     }
@@ -47,7 +47,8 @@ public:
       data_->vel = *data_->node.getVelocity();
       data_->eff = *data_->node.getTorque(data_->torque_constant);
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("PositionMode::read(): " << getNodeDescription() << ": " << error.what());
+      ROS_ERROR_STREAM("PositionMode::read(): " << data_->nodeDescription() << ": "
+                                                << error.what());
     }
   }
 
@@ -62,7 +63,8 @@ public:
         prev_pos_cmd_ = data_->pos_cmd;
       }
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("PositionMode::write(): " << getNodeDescription() << ": " << error.what());
+      ROS_ERROR_STREAM("PositionMode::write(): " << data_->nodeDescription() << ": "
+                                                 << error.what());
     }
   }
 
@@ -70,7 +72,7 @@ public:
     try {
       *data_->node.setDisableState();
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("PositionMode::stopping(): " << getNodeDescription() << ": "
+      ROS_ERROR_STREAM("PositionMode::stopping(): " << data_->nodeDescription() << ": "
                                                     << error.what());
     }
   }

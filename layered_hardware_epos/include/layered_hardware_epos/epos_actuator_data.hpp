@@ -6,7 +6,7 @@
 #include <epos_command_library_cpp/node.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 
-#include <boost/cstdint.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace layered_hardware_epos {
@@ -17,6 +17,11 @@ struct EposActuatorData {
       : name(_name), node(_node), count_per_revolution(_count_per_revolution),
         torque_constant(_torque_constant), pos(0.), vel(0.), eff(0.), pos_cmd(0.), vel_cmd(0.),
         eff_cmd(0.) {}
+
+  // useful when printing node-specific error info
+  std::string nodeDescription() const {
+    return "'" + name + "' (id = " + boost::lexical_cast< std::string >(node.getId()) + ")";
+  }
 
   // handles
   const std::string name;

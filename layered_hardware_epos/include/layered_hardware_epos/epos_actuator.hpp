@@ -129,9 +129,8 @@ public:
 
     // assert 0 or 1 operating modes. multiple modes are impossible.
     if (n_modes != 0 && n_modes != 1) {
-      ROS_ERROR_STREAM("EposActuator::prepareSwitch(): Rejected unfeasible controller "
-                       "switching for the actuator '"
-                       << data_->name << "' (id: " << data_->node.getId() << ")");
+      ROS_ERROR_STREAM("EposActuator::prepareSwitch(): "
+                       << data_->nodeDescription() << ": Rejected unfeasible controller switching");
       return false;
     }
 
@@ -146,9 +145,9 @@ public:
         const std::map< std::string, OperatingModePtr >::const_iterator mode_to_stop(
             mode_map_.find(stopping_controller.name));
         if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
-          ROS_INFO_STREAM("EposActuator::doSwitch(): Stopping operating mode '"
-                          << present_mode_->getName() << "' for the actuator '" << data_->name
-                          << "' (id: " << data_->node.getId() << ")");
+          ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
+                                                       << ": Stopping operating mode '"
+                                                       << present_mode_->getName() << "'");
           present_mode_->stopping();
           present_mode_ = OperatingModePtr();
           break;
@@ -162,9 +161,9 @@ public:
         const std::map< std::string, OperatingModePtr >::const_iterator mode_to_start(
             mode_map_.find(starting_controller.name));
         if (mode_to_start != mode_map_.end() && mode_to_start->second) {
-          ROS_INFO_STREAM("EposActuator::doSwitch(): Starting operating mode '"
-                          << mode_to_start->second->getName() << "' for the actuator '"
-                          << data_->name << "' (id: " << data_->node.getId() << ")");
+          ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
+                                                       << ": Starting operating mode '"
+                                                       << mode_to_start->second->getName() << "'");
           present_mode_ = mode_to_start->second;
           present_mode_->starting();
           break;
@@ -199,12 +198,10 @@ private:
 
   OperatingModePtr makeOperatingMode(const std::string &mode_str,
                                      const std::map< std::string, int > &item_map) {
-    if (mode_str == "clear_multi_turn") {
-      // return boost::make_shared< ClearMultiTurnMode >(data_);
-    } else if (mode_str == "current") {
+    if (mode_str == "current") {
       return boost::make_shared< CurrentMode >(data_);
-    } else if (mode_str == "current_based_position") {
-      // return boost::make_shared< CurrentBasedPositionMode >(data_, item_map);
+    } else if (mode_str == "disable") {
+      // return boost::make_shared< TorqueDisableMode >(data_);
     } else if (mode_str == "position") {
       return boost::make_shared< PositionMode >(data_);
     } else if (mode_str == "profile_position") {
@@ -213,15 +210,14 @@ private:
       return boost::make_shared< ProfileVelocityMode >(data_);
     } else if (mode_str == "reboot") {
       // return boost::make_shared< RebootMode >(data_);
-    } else if (mode_str == "torque_disable") {
-      // return boost::make_shared< TorqueDisableMode >(data_);
     } else if (mode_str == "velocity") {
       return boost::make_shared< VelocityMode >(data_);
+    } else {
+      ROS_ERROR_STREAM("EposActuator::makeOperatingMode(): " << data_->nodeDescription()
+                                                             << ": Unknown operating mode name '"
+                                                             << mode_str << "'");
+      return OperatingModePtr();
     }
-    ROS_ERROR_STREAM("EposActuator::makeOperatingMode(): Unknown operating mode name '"
-                     << mode_str << " for the actuator '" << data_->name
-                     << "' (id: " << data_->node.getId() << ")");
-    return OperatingModePtr();
   }
 
 private:

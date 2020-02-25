@@ -7,7 +7,6 @@
 #include <ros/duration.h>
 #include <ros/time.h>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace layered_hardware_epos {
@@ -29,13 +28,6 @@ public:
   virtual void write(const ros::Time &time, const ros::Duration &period) = 0;
 
   virtual void stopping() = 0;
-
-protected:
-  // useful when printing error info in child classes
-  std::string getNodeDescription() const {
-    return "'" + data_->name +
-           "' (id = " + boost::lexical_cast< std::string >(data_->node.getId()) + ")";
-  }
 
 protected:
   const std::string name_;
