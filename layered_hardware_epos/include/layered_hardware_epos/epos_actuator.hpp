@@ -12,6 +12,7 @@
 #include <hardware_interface/robot_hw.h>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/current_mode.hpp>
+#include <layered_hardware_epos/disable_mode.hpp>
 #include <layered_hardware_epos/operating_mode_base.hpp>
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/profile_position_mode.hpp>
@@ -201,7 +202,7 @@ private:
     if (mode_str == "current") {
       return boost::make_shared< CurrentMode >(data_);
     } else if (mode_str == "disable") {
-      // return boost::make_shared< TorqueDisableMode >(data_);
+      return boost::make_shared< DisableMode >(data_);
     } else if (mode_str == "position") {
       return boost::make_shared< PositionMode >(data_);
     } else if (mode_str == "profile_position") {
