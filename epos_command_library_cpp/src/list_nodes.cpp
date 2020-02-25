@@ -79,9 +79,8 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     const eclc::Node node(device, path.node_id);
 
     boost::uint64_t serial_number(*node.getSerialNumber());
-    const unsigned short hw_version(*node.getHardwareVersion()),
-        sw_version(*node.getSoftwareVersion()), app_num(*node.getApplicationNumber()),
-        app_version(*node.getApplicationVersion());
+    unsigned short hw_version, sw_version, app_num, app_version;
+    *node.getVersion(&hw_version, &sw_version, &app_num, &app_version);
 
     const std::string indent(n_indent, '\t');
     std::cout << indent << "Node Id: " << std::dec << path.node_id << std::endl;

@@ -24,44 +24,16 @@ public:
 
   unsigned short getId() const { return id_; }
 
-  Result< unsigned short > getHardwareVersion() const {
-    typedef Result< unsigned short > ResultUS;
-    unsigned short hw_version, sw_version, app_num, app_version;
+  Result< void > getVersion(unsigned short *const hardware_version,
+                            unsigned short *const software_version,
+                            unsigned short *const application_number,
+                            unsigned short *const application_version) const {
+    typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
-                          &app_version, &error_code) != 0
-               ? ResultUS::success(hw_version)
-               : ResultUS::error(error_code);
-  }
-
-  Result< unsigned short > getSoftwareVersion() const {
-    typedef Result< unsigned short > ResultUS;
-    unsigned short hw_version, sw_version, app_num, app_version;
-    unsigned int error_code;
-    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
-                          &app_version, &error_code) != 0
-               ? ResultUS::success(sw_version)
-               : ResultUS::error(error_code);
-  }
-
-  Result< unsigned short > getApplicationNumber() const {
-    typedef Result< unsigned short > ResultUS;
-    unsigned short hw_version, sw_version, app_num, app_version;
-    unsigned int error_code;
-    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
-                          &app_version, &error_code) != 0
-               ? ResultUS::success(app_num)
-               : ResultUS::error(error_code);
-  }
-
-  Result< unsigned short > getApplicationVersion() const {
-    typedef Result< unsigned short > ResultUS;
-    unsigned short hw_version, sw_version, app_num, app_version;
-    unsigned int error_code;
-    return VCS_GetVersion(device_.handle_.get(), id_, &hw_version, &sw_version, &app_num,
-                          &app_version, &error_code) != 0
-               ? ResultUS::success(app_version)
-               : ResultUS::error(error_code);
+    return VCS_GetVersion(device_.handle_.get(), id_, hardware_version, software_version,
+                          application_number, application_version, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
   }
 
   Result< boost::uint64_t > getSerialNumber() const {
