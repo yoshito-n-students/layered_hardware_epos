@@ -76,20 +76,24 @@ struct Path {
 void listNode(const eclc::Device &device, const Path &path, const Configs &configs,
               const std::size_t n_indent) {
   try {
-    const eclc::Node node(device, path.node_id);
-
-    const boost::uint64_t serial_number(*node.getSerialNumber());
-    unsigned short hw_version, sw_version, app_num, app_version;
-    *node.getVersion(&hw_version, &sw_version, &app_num, &app_version);
-
     const std::string indent(n_indent, '\t');
     std::cout << indent << "Node Id: " << std::dec << path.node_id << std::endl;
+
+    const eclc::Node node(device, path.node_id);
+
+    // serial number
+    const boost::uint64_t serial_number(*node.getSerialNumber());
     std::cout << indent << "\tSerial number: 0x" << std::hex << serial_number << std::endl;
+
+    // versions
+    unsigned short hw_version, sw_version, app_num, app_version;
+    *node.getVersion(&hw_version, &sw_version, &app_num, &app_version);
     std::cout << indent << "\tHardware version: 0x" << std::hex << hw_version << std::endl;
     std::cout << indent << "\tSoftware version: 0x" << std::hex << sw_version << std::endl;
     std::cout << indent << "\tApplication number: 0x" << std::hex << app_num << std::endl;
     std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
 
+    // motor parameters
     const unsigned short motor_type(*node.getMotorType());
     if (motor_type == MT_DC_MOTOR) {
       std::cout << indent << "\tMotor type: DC (" << std::dec << motor_type << ")" << std::endl;
@@ -114,6 +118,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
                 << std::endl;
     }
 
+    // sensor parameters
     const unsigned short sensor_type(*node.getSensorType());
     if (sensor_type == ST_INC_ENCODER_2CHANNEL || sensor_type == ST_INC_ENCODER_3CHANNEL ||
         sensor_type == ST_INC_ENCODER2_2CHANNEL || sensor_type == ST_INC_ENCODER2_3CHANNEL ||
