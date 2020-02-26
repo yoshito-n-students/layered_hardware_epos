@@ -318,7 +318,7 @@ public:
     typedef Result< void > ResultV;
     unsigned int error_code;
     return VCS_MoveToPosition(device_.handle_.get(), id_, target_position_count, absolute ? 1 : 0,
-                              immediately ? 1 : 0, &error_code)
+                              immediately ? 1 : 0, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
@@ -392,7 +392,7 @@ public:
   Result< void > setPositionMust(const long position_must_count) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetPositionMust(device_.handle_.get(), id_, position_must_count, &error_code)
+    return VCS_SetPositionMust(device_.handle_.get(), id_, position_must_count, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
@@ -415,7 +415,7 @@ public:
   Result< void > moveWithVelocity(const long target_velocity_rpm) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity_rpm, &error_code)
+    return VCS_MoveWithVelocity(device_.handle_.get(), id_, target_velocity_rpm, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
@@ -479,7 +479,7 @@ public:
   Result< void > setVelocityMust(const long velocity_must_rpm) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetVelocityMust(device_.handle_.get(), id_, velocity_must_rpm, &error_code)
+    return VCS_SetVelocityMust(device_.handle_.get(), id_, velocity_must_rpm, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
@@ -502,7 +502,7 @@ public:
   Result< void > setCurrentMust(const short current_must_ma) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetCurrentMust(device_.handle_.get(), id_, current_must_ma, &error_code)
+    return VCS_SetCurrentMust(device_.handle_.get(), id_, current_must_ma, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
