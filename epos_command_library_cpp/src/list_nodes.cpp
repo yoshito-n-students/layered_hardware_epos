@@ -112,10 +112,10 @@ void listNodesOnPort(const Path &path, const Configs &configs, const std::size_t
   *device.setTimeout(configs.timeout_ms);
 
   // list nodes on the device
-  std::cout << "\tNodes (up to node id '" << configs.max_node_id << "'):" << std::endl;
+  std::cout << indent << "\tNodes (up to node id '" << configs.max_node_id << "'):" << std::endl;
   for (unsigned short node_id = 1; node_id <= configs.max_node_id; ++node_id) {
     listNode(device, Path(path.device, path.protocol_stack, path.interface, path.port, node_id),
-             configs, n_indent + 1);
+             configs, n_indent + 2);
   }
 }
 
