@@ -78,7 +78,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
   try {
     const eclc::Node node(device, path.node_id);
 
-    boost::uint64_t serial_number(*node.getSerialNumber());
+    const boost::uint64_t serial_number(*node.getSerialNumber());
     unsigned short hw_version, sw_version, app_num, app_version;
     *node.getVersion(&hw_version, &sw_version, &app_num, &app_version);
 
@@ -89,6 +89,42 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     std::cout << indent << "\tSoftware version: 0x" << std::hex << sw_version << std::endl;
     std::cout << indent << "\tApplication number: 0x" << std::hex << app_num << std::endl;
     std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
+
+    const unsigned short motor_type(*node.getMotorType());
+    std::cout << indent << "\tMotor type: " << motor_type << std::endl;
+    if (motor_type == MT_DC_MOTOR) {
+      unsigned short nominal_current, max_output_current, thermal_time_constant;
+      *node.getDcMotorParameter(&nominal_current, &max_output_current, &thermal_time_constant);
+      std::cout << indent << "\t\tNominal current: " << nominal_current << std::endl;
+      std::cout << indent << "\t\tMax output current: " << max_output_current << std::endl;
+      std::cout << indent << "\t\tThermal time constant: " << thermal_time_constant << std::endl;
+    } else if (motor_type == MT_EC_BLOCK_COMMUTATED_MOTOR ||
+               motor_type == MT_EC_SINUS_COMMUTATED_MOTOR) {
+      unsigned short nominal_current, max_output_current, thermal_time_constant;
+      unsigned char n_pole_pairs;
+      *node.getEcMotorParameter(&nominal_current, &max_output_current, &thermal_time_constant,
+                                &n_pole_pairs);
+      std::cout << indent << "\t\tNominal current: " << nominal_current << std::endl;
+      std::cout << indent << "\t\tMax output current: " << max_output_current << std::endl;
+      std::cout << indent << "\t\tThermal time constant: " << thermal_time_constant << std::endl;
+      std::cout << indent << "\t\tPole pairs: " << static_cast< int >(n_pole_pairs) << std::endl;
+    } else {
+      std::cerr << indent << "\t\tUnknown motor type!!!" << std::endl;
+    }
+
+    const unsigned short sensor_type(*node.getSensorType());
+    std::cout << indent << "\tSensor type: " << sensor_type << std::endl;
+    if (sensor_type == ST_INC_ENCODER_2CHANNEL || sensor_type == ST_INC_ENCODER_3CHANNEL ||
+        sensor_type == ST_INC_ENCODER2_2CHANNEL || sensor_type == ST_INC_ENCODER2_3CHANNEL) {
+      unsigned int encoder_resolution;
+      bool inverted_polarity;
+      *node.getIncEncoderParameter(&encoder_resolution, &inverted_polarity);
+      std::cout << indent << "\t\tEncoder resolution: " << encoder_resolution << std::endl;
+      std::cout << indent << "\t\tInverted polarity: " << (inverted_polarity ? "Yes" : "No")
+                << std::endl;
+    } else {
+      std::cerr << indent << "\t\tUnknown sensor type!!!" << std::endl;
+    }
   } catch (const eclc::Exception &error) {
     // catching an error indicates the node does not exist. nothing to show.
   }
