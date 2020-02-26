@@ -70,8 +70,8 @@ public:
     return ResultU64::success(serial_number);
   }
 
-  // =======
-  // object
+  // ==============
+  // configuration
 
   Result< unsigned int > setObject(const unsigned short object_id,
                                    const unsigned short object_sub_id, void *const data,
@@ -94,6 +94,104 @@ public:
                ? ResultUI::success(n_bytes_read)
                : ResultUI::error(error_code);
   }
+
+  Result< void > setMotorType(const unsigned short motor_type) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetMotorType(device_.handle_.get(), id_, motor_type, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setDcMotorParameter(const unsigned short nominal_current,
+                                     const unsigned short max_output_current,
+                                     const unsigned short thermal_time_constant) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetDcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
+                                   thermal_time_constant, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setEcMotorParameter(const unsigned short nominal_current,
+                                     const unsigned short max_output_current,
+                                     const unsigned short thermal_time_constant,
+                                     const unsigned char n_pole_pairs) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetEcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
+                                   thermal_time_constant, n_pole_pairs, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< unsigned short > getMotorType() const {
+    typedef Result< unsigned short > ResultUS;
+    unsigned short motor_type;
+    unsigned int error_code;
+    return VCS_GetMotorType(device_.handle_.get(), id_, &motor_type, &error_code) != 0
+               ? ResultUS::success(motor_type)
+               : ResultUS::error(error_code);
+  }
+
+  Result< void > getEcMotorParameter(unsigned short *const nominal_current,
+                                     unsigned short *const max_output_current,
+                                     unsigned short *const thermal_time_constant,
+                                     unsigned char *const n_pole_pairs) const {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_GetEcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
+                                   thermal_time_constant, n_pole_pairs, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > getDcMotorParameter(unsigned short *const nominal_current,
+                                     unsigned short *const max_output_current,
+                                     unsigned short *const thermal_time_constant) const {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_GetDcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
+                                   thermal_time_constant, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< unsigned short > getSensorType() const {
+    typedef Result< unsigned short > ResultUS;
+    unsigned short sensor_type;
+    unsigned int error_code;
+    return VCS_GetSensorType(device_.handle_.get(), id_, &sensor_type, &error_code) != 0
+               ? ResultUS::success(sensor_type)
+               : ResultUS::error(error_code);
+  }
+
+  Result< void > getIncEncoderParameter(unsigned int *const encoder_resolution,
+                                        bool *const inverted_polarity) const {
+    typedef Result< void > ResultV;
+    int inverted_polarity_int;
+    unsigned int error_code;
+    if (VCS_GetIncEncoderParameter(device_.handle_.get(), id_, encoder_resolution,
+                                   &inverted_polarity_int, &error_code) == 0) {
+      return ResultV::error(error_code);
+    }
+
+    *inverted_polarity = (inverted_polarity_int != 0);
+    return ResultV::success();
+  }
+
+  Result< void > setIncEncoderParameter(const unsigned int encoder_resolution,
+                                        const bool inverted_polarity) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetIncEncoderParameter(device_.handle_.get(), id_, encoder_resolution,
+                                      inverted_polarity ? 1 : 0, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  // TODO: support other sensor types
 
   // ===============
   // operation mode
@@ -541,6 +639,6 @@ public:
 private:
   Device device_;
   const unsigned short id_;
-};
+}; // namespace epos_command_library_cpp
 } // namespace epos_command_library_cpp
 #endif
