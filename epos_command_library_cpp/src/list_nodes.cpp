@@ -141,7 +141,7 @@ void listNodesOnProtocolStack(const Path &path, const Configs &configs,
       *eclc::getInterfaceNameList(path.device, path.protocol_stack));
   BOOST_FOREACH (const std::string &interface, interfaces) {
     if (!configs.do_list_rs232 && interface == "RS232") {
-      std::cout << indent << "\tSkipping RS232" << std::endl;
+      std::cout << indent << "\tRS232 (use '--rs232' option to list)" << std::endl;
       continue;
     }
     listNodesOnInterface(Path(path.device, path.protocol_stack, interface), configs, n_indent + 1);
