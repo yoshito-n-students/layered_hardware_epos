@@ -60,7 +60,7 @@ public:
 
     try {
       if (!boost::math::isnan(data_->vel_cmd) && data_->vel_cmd != prev_vel_cmd_) {
-        *data_->node.setVelocityMust(data_->vel_cmd);
+        *data_->node.moveWithVelocity(data_->vel_cmd);
         prev_vel_cmd_ = data_->vel_cmd;
       }
     } catch (const eclc::Exception &error) {

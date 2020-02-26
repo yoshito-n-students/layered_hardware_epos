@@ -1,0 +1,24 @@
+<robot name="single_epos4_example">
+
+    <link name="base_link" />
+
+    <joint name="axis" type="continuous">
+        <parent link="base_link" />
+        <child link="none" />
+    </joint>
+
+    <transmission name="trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="axis">
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="motor">
+            <mechanicalReduction>190</mechanicalReduction>
+        </actuator>
+    </transmission>
+
+    <link name="none" />
+
+</robot>

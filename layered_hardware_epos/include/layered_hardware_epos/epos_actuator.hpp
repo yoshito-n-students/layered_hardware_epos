@@ -97,6 +97,16 @@ public:
                        << param_nh.resolveName("operation_mode_map") << "'");
       return false;
     }
+    BOOST_FOREACH (const ModeNameMap::value_type &mode_name, mode_name_map) {
+      const OperationModePtr mode(makeOperationMode(mode_name.second));
+      if (!mode) {
+        ROS_ERROR_STREAM("EposActuator::init(): " << data_->nodeDescription()
+                                                  << ": Failed to make operation mode '"
+                                                  << mode_name.second << "')");
+        return false;
+      }
+      mode_map_[mode_name.first] = mode;
+    }
 
     return true;
   }
@@ -198,8 +208,7 @@ private:
     return true;
   }
 
-  OperationModePtr makeOperationMode(const std::string &mode_str,
-                                     const std::map< std::string, int > &item_map) {
+  OperationModePtr makeOperationMode(const std::string &mode_str) {
     if (mode_str == "current") {
       return boost::make_shared< CurrentMode >(data_);
     } else if (mode_str == "disable") {

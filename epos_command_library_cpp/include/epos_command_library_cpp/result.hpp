@@ -88,7 +88,6 @@ private:
 
 private:
   boost::optional< T > value_;
-  unsigned int error_code_;
 };
 
 // void specialization
@@ -131,7 +130,6 @@ private:
 
 private:
   bool is_error_;
-  unsigned int error_code_;
 };
 } // namespace epos_command_library_cpp
 

@@ -1,0 +1,11 @@
+<library path="lib/liblayered_hardware_epos_plugins">
+
+  <class name="layered_hardware_epos/EposActuatorLayer"
+         type="layered_hardware_epos::EposActuatorLayer"
+         base_class_type="layered_hardware::LayerBase">
+    <description>
+      Hardware layer that handles MAXON EPOS actuator drivers
+    </description>
+  </class>  
+
+</library>
