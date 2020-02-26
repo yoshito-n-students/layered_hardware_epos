@@ -158,6 +158,33 @@ public:
                : ResultV::error(error_code);
   }
 
+  Result< void > setSensorType(const unsigned short sensor_type) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetSensorType(device_.handle_.get(), id_, sensor_type, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setIncEncoderParameter(const unsigned int encoder_resolution,
+                                        const bool inverted_polarity) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetIncEncoderParameter(device_.handle_.get(), id_, encoder_resolution,
+                                      inverted_polarity ? 1 : 0, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setIncHallSensorParameter(const bool inverted_polarity) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetHallSensorParameter(device_.handle_.get(), id_, inverted_polarity ? 1 : 0,
+                                      &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
   Result< unsigned short > getSensorType() const {
     typedef Result< unsigned short > ResultUS;
     unsigned short sensor_type;
@@ -181,14 +208,17 @@ public:
     return ResultV::success();
   }
 
-  Result< void > setIncEncoderParameter(const unsigned int encoder_resolution,
-                                        const bool inverted_polarity) {
+  Result< void > getHallSensorParameter(bool *const inverted_polarity) const {
     typedef Result< void > ResultV;
+    int inverted_polarity_int;
     unsigned int error_code;
-    return VCS_SetIncEncoderParameter(device_.handle_.get(), id_, encoder_resolution,
-                                      inverted_polarity ? 1 : 0, &error_code) != 0
-               ? ResultV::success()
-               : ResultV::error(error_code);
+    if (VCS_GetHallSensorParameter(device_.handle_.get(), id_, &inverted_polarity_int,
+                                   &error_code) == 0) {
+      return ResultV::error(error_code);
+    }
+
+    *inverted_polarity = (inverted_polarity_int != 0);
+    return ResultV::success();
   }
 
   // TODO: support other sensor types
