@@ -1,0 +1,65 @@
+<launch>
+
+    <!-- The robot description -->
+    <param name="robot_description" textfile="$(find layered_hardware_epos)/urdf/single_epos4_example.urdf" />
+
+    <!-- Hardware driver -->
+    <node name="example_layered_hardware_node" pkg="layered_hardware" type="layered_hardware_node" output="screen">
+        <rosparam>
+            control_frequency: 20
+            use_expected_period: true
+            # upper (controller-side) to bottom (actuator-side)
+            layers: [ joint_limits_layer, transmission_layer, epos_actuator_layer ]
+            joint_limits_layer:
+                type: layered_hardware_extensions/ExtendedJointLimitsLayer
+            transmission_layer:
+                type: layered_hardware/TransmissionLayer
+            epos_actuator_layer:
+                type: layered_hardware_epos/EposActuatorLayer
+                device: EPOS4
+                protocol_stack: MAXON SERIAL V2
+                interface: USB
+                port: USB0
+                baudrate: 1000000
+                actuators:
+                    motor:
+                        id: 1
+                        count_per_revolution: 2048
+                        torque_constant: 2.41
+                        operation_mode_map:
+                            position_controller: profile_position
+                            velocity_controller: profile_velocity
+                            effort_controller: current
+                            reset_controller: reset
+        </rosparam>
+    </node>
+
+    <!-- Controller parameters -->
+    <rosparam>
+        joint_state_controller:
+            type: joint_state_controller/JointStateController
+            publish_rate: 20
+        position_controller:
+            type: position_controllers/JointPositionController
+            joint: axis
+        velocity_controller:
+            type: velocity_controllers/JointVelocityController
+            joint: axis
+        effort_controller:
+            type: effort_controllers/JointEffortController
+            joint: axis
+        reset_controller:
+            type: empty_controller/EmptyController
+    </rosparam>
+
+    <!-- Controller starter -->
+    <node name="controller_starter" pkg="controller_manager" type="controller_manager" output="screen"
+          args="spawn joint_state_controller velocity_controller" />
+
+    <node name="controller_loader" pkg="controller_manager" type="controller_manager" output="screen"
+          args="load position_controller effort_controller reset_controller" />
+
+    <!-- joint state msg to tf -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" />
+
+</launch>
