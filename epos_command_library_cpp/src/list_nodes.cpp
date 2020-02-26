@@ -134,6 +134,23 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
       *node.getHallSensorParameter(&inverted_polarity);
       std::cout << indent << "\t\tInverted polarity: " << (inverted_polarity ? "Yes" : "No")
                 << std::endl;
+    } else if (sensor_type == ST_SSI_ABS_ENCODER_BINARY || sensor_type == ST_SSI_ABS_ENCODER_GREY) {
+      std::cout << indent << "\tSensor type: Asbolute encoder (" << std::dec << sensor_type << ")"
+                << std::endl;
+      unsigned short data_rate, n_multi_turn_data_bits, n_single_turn_data_bits,
+          n_special_data_bits, timeout, powerup_time;
+      bool inverted_polarity;
+      *node.getSsiAbsEncoderParameterEx(&data_rate, &n_multi_turn_data_bits,
+                                        &n_single_turn_data_bits, &n_special_data_bits,
+                                        &inverted_polarity, &timeout, &powerup_time);
+      std::cout << indent << "\t\tData rate: " << data_rate << std::endl;
+      std::cout << indent << "\t\tMulti turn data bits: " << n_multi_turn_data_bits << std::endl;
+      std::cout << indent << "\t\tSingle turn data bits: " << n_single_turn_data_bits << std::endl;
+      std::cout << indent << "\t\tSpecial data bits: " << n_special_data_bits << std::endl;
+      std::cout << indent << "\t\tInverted polarity: " << (inverted_polarity ? "Yes" : "No")
+                << std::endl;
+      std::cout << indent << "\t\tTimeout: " << timeout << std::endl;
+      std::cout << indent << "\t\tPowerup time: " << powerup_time << std::endl;
     } else {
       std::cout << indent << "\tSensor type: Unknown (" << std::dec << sensor_type << ")"
                 << std::endl;
