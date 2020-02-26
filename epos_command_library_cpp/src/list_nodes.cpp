@@ -91,8 +91,8 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
 
     const unsigned short motor_type(*node.getMotorType());
-    std::cout << indent << "\tMotor type: " << std::dec << motor_type << std::endl;
     if (motor_type == MT_DC_MOTOR) {
+      std::cout << indent << "\tMotor type: DC (" << std::dec << motor_type << ")" << std::endl;
       unsigned short nominal_current, max_output_current, thermal_time_constant;
       *node.getDcMotorParameter(&nominal_current, &max_output_current, &thermal_time_constant);
       std::cout << indent << "\t\tNominal current: " << nominal_current << std::endl;
@@ -100,6 +100,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
       std::cout << indent << "\t\tThermal time constant: " << thermal_time_constant << std::endl;
     } else if (motor_type == MT_EC_BLOCK_COMMUTATED_MOTOR ||
                motor_type == MT_EC_SINUS_COMMUTATED_MOTOR) {
+      std::cout << indent << "\tMotor type: EC (" << std::dec << motor_type << ")" << std::endl;
       unsigned short nominal_current, max_output_current, thermal_time_constant;
       unsigned char n_pole_pairs;
       *node.getEcMotorParameter(&nominal_current, &max_output_current, &thermal_time_constant,
@@ -109,21 +110,33 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
       std::cout << indent << "\t\tThermal time constant: " << thermal_time_constant << std::endl;
       std::cout << indent << "\t\tPole pairs: " << static_cast< int >(n_pole_pairs) << std::endl;
     } else {
-      std::cerr << indent << "\t\tUnknown motor type!!!" << std::endl;
+      std::cout << indent << "\tMotor type: Unknown (" << std::dec << motor_type << ")"
+                << std::endl;
     }
 
     const unsigned short sensor_type(*node.getSensorType());
-    std::cout << indent << "\tSensor type: " << std::dec << sensor_type << std::endl;
     if (sensor_type == ST_INC_ENCODER_2CHANNEL || sensor_type == ST_INC_ENCODER_3CHANNEL ||
-        sensor_type == ST_INC_ENCODER2_2CHANNEL || sensor_type == ST_INC_ENCODER2_3CHANNEL) {
+        sensor_type == ST_INC_ENCODER2_2CHANNEL || sensor_type == ST_INC_ENCODER2_3CHANNEL ||
+        sensor_type == ST_ANALOG_INC_ENCODER_2CHANNEL ||
+        sensor_type == ST_ANALOG_INC_ENCODER_3CHANNEL) {
+      std::cout << indent << "\tSensor type: Incremental encoder (" << std::dec << sensor_type
+                << ")" << std::endl;
       unsigned int encoder_resolution;
       bool inverted_polarity;
       *node.getIncEncoderParameter(&encoder_resolution, &inverted_polarity);
       std::cout << indent << "\t\tEncoder resolution: " << encoder_resolution << std::endl;
       std::cout << indent << "\t\tInverted polarity: " << (inverted_polarity ? "Yes" : "No")
                 << std::endl;
+    } else if (sensor_type == ST_HALL_SENSORS) {
+      std::cout << indent << "\tSensor type: Hall sensors (" << std::dec << sensor_type << ")"
+                << std::endl;
+      bool inverted_polarity;
+      *node.getHallSensorParameter(&inverted_polarity);
+      std::cout << indent << "\t\tInverted polarity: " << (inverted_polarity ? "Yes" : "No")
+                << std::endl;
     } else {
-      std::cerr << indent << "\t\tUnknown sensor type!!!" << std::endl;
+      std::cout << indent << "\tSensor type: Unknown (" << std::dec << sensor_type << ")"
+                << std::endl;
     }
   } catch (const eclc::Exception &error) {
     // catching an error indicates the node does not exist. nothing to show.
