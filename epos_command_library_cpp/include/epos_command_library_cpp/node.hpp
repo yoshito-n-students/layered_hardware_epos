@@ -185,6 +185,36 @@ public:
                : ResultV::error(error_code);
   }
 
+  Result< void > setSsiAbsEncoderParameter(const unsigned short data_rate,
+                                           const unsigned short n_multi_turn_data_bits,
+                                           const unsigned short n_single_turn_data_bits,
+                                           const bool inverted_polarity) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetSsiAbsEncoderParameter(device_.handle_.get(), id_, data_rate,
+                                         n_multi_turn_data_bits, n_single_turn_data_bits,
+                                         inverted_polarity ? 1 : 0, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setSsiAbsEncoderParameterEx(const unsigned short data_rate,
+                                             const unsigned short n_multi_turn_data_bits,
+                                             const unsigned short n_single_turn_data_bits,
+                                             const unsigned short n_special_data_bits,
+                                             const bool inverted_polarity,
+                                             const unsigned short timeout,
+                                             const unsigned short powerup_time) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetSsiAbsEncoderParameterEx(device_.handle_.get(), id_, data_rate,
+                                           n_multi_turn_data_bits, n_single_turn_data_bits,
+                                           n_special_data_bits, inverted_polarity ? 1 : 0, timeout,
+                                           powerup_time, &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
   Result< unsigned short > getSensorType() const {
     typedef Result< unsigned short > ResultUS;
     unsigned short sensor_type;
@@ -221,7 +251,44 @@ public:
     return ResultV::success();
   }
 
-  // TODO: support other sensor types
+  Result< void > getSsiAbsEncoderParameter(unsigned short *const data_rate,
+                                           unsigned short *const n_multi_turn_data_bits,
+                                           unsigned short *const n_single_turn_data_bits,
+                                           bool *const inverted_polarity) const {
+    typedef Result< void > ResultV;
+
+    int inverted_polarity_int;
+    unsigned int error_code;
+    if (VCS_GetSsiAbsEncoderParameter(device_.handle_.get(), id_, data_rate, n_multi_turn_data_bits,
+                                      n_single_turn_data_bits, &inverted_polarity_int,
+                                      &error_code) == 0) {
+      return ResultV::error(error_code);
+    }
+
+    *inverted_polarity = (inverted_polarity_int != 0);
+    return ResultV::success();
+  }
+
+  Result< void > getSsiAbsEncoderParameterEx(unsigned short *const data_rate,
+                                             unsigned short *const n_multi_turn_data_bits,
+                                             unsigned short *const n_single_turn_data_bits,
+                                             unsigned short *const n_special_data_bits,
+                                             bool *const inverted_polarity,
+                                             unsigned short *const timeout,
+                                             unsigned short *const powerup_time) const {
+    typedef Result< void > ResultV;
+
+    int inverted_polarity_int;
+    unsigned int error_code;
+    if (VCS_GetSsiAbsEncoderParameterEx(
+            device_.handle_.get(), id_, data_rate, n_multi_turn_data_bits, n_single_turn_data_bits,
+            n_special_data_bits, &inverted_polarity_int, timeout, powerup_time, &error_code) == 0) {
+      return ResultV::error(error_code);
+    }
+
+    *inverted_polarity = (inverted_polarity_int != 0);
+    return ResultV::success();
+  }
 
   // ===============
   // operation mode
@@ -669,6 +736,6 @@ public:
 private:
   Device device_;
   const unsigned short id_;
-}; // namespace epos_command_library_cpp
+};
 } // namespace epos_command_library_cpp
 #endif
