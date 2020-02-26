@@ -121,7 +121,12 @@ void listNodesOnPort(const Path &path, const Configs &configs, const std::size_t
 
 void listNodesOnInterface(const Path &path, const Configs &configs, const std::size_t n_indent) {
   const std::string indent(n_indent, '\t');
-  std::cout << indent << path.interface << std::endl;
+  if (path.interface != "RS232" || configs.do_list_rs232) {
+    std::cout << indent << path.interface << std::endl;
+  } else {
+    std::cout << indent << "RS232 (use '--rs232' option to list)" << std::endl;
+    return;
+  }
 
   // list nodes on the interface
   const std::vector< std::string > ports(
@@ -140,10 +145,6 @@ void listNodesOnProtocolStack(const Path &path, const Configs &configs,
   const std::vector< std::string > interfaces(
       *eclc::getInterfaceNameList(path.device, path.protocol_stack));
   BOOST_FOREACH (const std::string &interface, interfaces) {
-    if (!configs.do_list_rs232 && interface == "RS232") {
-      std::cout << indent << "\tRS232 (use '--rs232' option to list)" << std::endl;
-      continue;
-    }
     listNodesOnInterface(Path(path.device, path.protocol_stack, interface), configs, n_indent + 1);
   }
 }
