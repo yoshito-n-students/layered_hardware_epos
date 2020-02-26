@@ -91,7 +91,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     std::cout << indent << "\tApplication version: 0x" << std::hex << app_version << std::endl;
 
     const unsigned short motor_type(*node.getMotorType());
-    std::cout << indent << "\tMotor type: " << motor_type << std::endl;
+    std::cout << indent << "\tMotor type: " << std::dec << motor_type << std::endl;
     if (motor_type == MT_DC_MOTOR) {
       unsigned short nominal_current, max_output_current, thermal_time_constant;
       *node.getDcMotorParameter(&nominal_current, &max_output_current, &thermal_time_constant);
@@ -113,7 +113,7 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
     }
 
     const unsigned short sensor_type(*node.getSensorType());
-    std::cout << indent << "\tSensor type: " << sensor_type << std::endl;
+    std::cout << indent << "\tSensor type: " << std::dec << sensor_type << std::endl;
     if (sensor_type == ST_INC_ENCODER_2CHANNEL || sensor_type == ST_INC_ENCODER_3CHANNEL ||
         sensor_type == ST_INC_ENCODER2_2CHANNEL || sensor_type == ST_INC_ENCODER2_3CHANNEL) {
       unsigned int encoder_resolution;
