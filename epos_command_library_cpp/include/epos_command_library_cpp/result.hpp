@@ -59,6 +59,13 @@ public:
 
   bool isSuccess() const { return value_ != boost::none; }
 
+  Value &unwrap() {
+    if (isError()) {
+      throw NoValueException(errorInfo());
+    }
+    return *value_;
+  }
+
   const Value &unwrap() const {
     if (isError()) {
       throw NoValueException(errorInfo());
@@ -66,7 +73,13 @@ public:
     return *value_;
   }
 
+  Value &operator*() { return unwrap(); }
+
   const Value &operator*() const { return unwrap(); }
+
+  Value *operator->() { return &unwrap(); }
+
+  const Value *operator->() const { return &unwrap(); }
 
   // ================
   // factory methods
