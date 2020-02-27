@@ -30,8 +30,8 @@ public:
   }
 
   std::string errorInfo() const {
-    char info[255];
-    if (VCS_GetErrorInfo(errorCode(), info, 255) == 0) {
+    char info[256];
+    if (VCS_GetErrorInfo(errorCode(), info, 256) == 0) {
       throw NoErrorInfoException("No info for the error code '" +
                                  boost::lexical_cast< std::string >(error_code_) + "'");
     }
