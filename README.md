@@ -5,7 +5,7 @@ A ros_control layer implementation for maxon EPOS motor drivers. See [layered_ha
 ### layered_hardware_epos/EposActuatorLayer
 * implements state & command interfaces for maxon EPOS motor drivers
 #### <u>Layer parameters (should be defined under ~<layer_name>)</u>
-___device___ (string, defau;t: 'EPOS4')
+___device___ (string, default: 'EPOS4')
 * device type of EPOS driver like 'EPOS', 'EPOS2', or 'EPOS4'.
 
 ___protocol_stack___ (string, default: 'MAXON SERIAL V2')
@@ -41,4 +41,4 @@ ___operation_mode_map___ (map<string, string>, required)
 * possible operation mode names are 'current', 'disable', 'position', 'profile_position', 'profile_velocity', 'reset', & 'velocity'
 
 #### <u>Example</u>
-see [launch/single_epos_example.launch](launch/single_epos_example.launch)
+see [layered_hardware_epos/launch/single_epos_example.launch](layered_hardware_epos/launch/single_epos_example.launch)
