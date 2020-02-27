@@ -302,6 +302,61 @@ public:
 
   // TODO: setSsiAbsEncoderParameterExSI()
 
+  Result< void > setMaxFollowingError(const unsigned int max_following_error_count) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetMaxFollowingError(device_.handle_.get(), id_, max_following_error_count,
+                                    &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > setMaxFollowingErrorSI(const double max_following_error_rad,
+                                        const int count_per_revolution) {
+    return setMaxFollowingError(radToCount(max_following_error_rad, count_per_revolution));
+  }
+
+  Result< unsigned int > getMaxFollowingError() const {
+    typedef Result< unsigned int > ResultUI;
+    unsigned int max_following_error_count, error_code;
+    return VCS_GetMaxFollowingError(device_.handle_.get(), id_, &max_following_error_count,
+                                    &error_code) != 0
+               ? ResultUI::success(max_following_error_count)
+               : ResultUI::error(error_code);
+  }
+
+  Result< double > getMaxFollowingErrorSI(const int count_per_revolution) const {
+    typedef Result< double > ResultD;
+
+    const Result< unsigned int > max_following_error_count(getMaxFollowingError());
+    if (max_following_error_count.isError()) {
+      return ResultD::error(max_following_error_count.errorCode());
+    }
+
+    return ResultD::success(countToRad(*max_following_error_count, count_per_revolution));
+  }
+
+  Result< void > setControllerGain(const unsigned short e_controller, const unsigned short e_gain,
+                                   const unsigned long long value) {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_SetControllerGain(device_.handle_.get(), id_, e_controller, e_gain, value,
+                                 &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< unsigned long long > getControllerGain(const unsigned short e_controller,
+                                                 const unsigned short e_gain) const {
+    typedef Result< unsigned long long > ResultULL;
+    unsigned long long value;
+    unsigned int error_code;
+    return VCS_GetControllerGain(device_.handle_.get(), id_, e_controller, e_gain, &value,
+                                 &error_code) != 0
+               ? ResultULL::success(value)
+               : ResultULL::error(error_code);
+  }
+
   // ===============
   // operation mode
 
