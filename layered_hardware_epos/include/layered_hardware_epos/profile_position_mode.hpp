@@ -63,8 +63,8 @@ public:
     }
 
     try {
-      // write profile velocity if command has been updated
-      if (!boost::math::isnan(data_->vel_cmd) && data_->vel_cmd != prev_vel_cmd_) {
+      // write profile velocity if command has been updated to be positive
+      if (data_->vel_cmd > 0. && data_->vel_cmd != prev_vel_cmd_) {
         *data_->node.setPositionProfile(data_->vel_cmd, prof_acc_, prof_dec_);
         prev_vel_cmd_ = data_->vel_cmd;
       }
