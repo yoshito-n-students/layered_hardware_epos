@@ -103,32 +103,46 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setDcMotorParameter(const unsigned short nominal_current,
-                                     const unsigned short max_output_current,
-                                     const unsigned short thermal_time_constant) {
+  Result< void > setDcMotorParameter(const unsigned short nominal_current_ma,
+                                     const unsigned short max_output_current_ma,
+                                     const unsigned short thermal_time_constant_01sec) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetDcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
-                                   thermal_time_constant, &error_code) != 0
+    return VCS_SetDcMotorParameter(device_.handle_.get(), id_, nominal_current_ma,
+                                   max_output_current_ma, thermal_time_constant_01sec,
+                                   &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  // TODO: setDcMotorParameterSI()
+  Result< void > setDcMotorParameterSI(const double nominal_current_a,
+                                       const double max_output_current_a,
+                                       const double thermal_time_constant_sec) {
+    return setDcMotorParameter(aToMa(nominal_current_a), aToMa(max_output_current_a),
+                               static_cast< unsigned short >(thermal_time_constant_sec * 10.));
+  }
 
-  Result< void > setEcMotorParameter(const unsigned short nominal_current,
-                                     const unsigned short max_output_current,
-                                     const unsigned short thermal_time_constant,
+  Result< void > setEcMotorParameter(const unsigned short nominal_current_ma,
+                                     const unsigned short max_output_current_ma,
+                                     const unsigned short thermal_time_constant_01sec,
                                      const unsigned char n_pole_pairs) {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_SetEcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
-                                   thermal_time_constant, n_pole_pairs, &error_code) != 0
+    return VCS_SetEcMotorParameter(device_.handle_.get(), id_, nominal_current_ma,
+                                   max_output_current_ma, thermal_time_constant_01sec, n_pole_pairs,
+                                   &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  // TODO: setEcMotorParameterSI()
+  Result< void > setEcMotorParameterSI(const double nominal_current_a,
+                                       const double max_output_current_a,
+                                       const double thermal_time_constant_sec,
+                                       const unsigned char n_pole_pairs) {
+    return setEcMotorParameter(aToMa(nominal_current_a), aToMa(max_output_current_a),
+                               static_cast< unsigned short >(thermal_time_constant_sec * 10.),
+                               n_pole_pairs);
+  }
 
   Result< unsigned short > getMotorType() const {
     typedef Result< unsigned short > ResultUS;
@@ -139,32 +153,67 @@ public:
                : ResultUS::error(error_code);
   }
 
-  Result< void > getEcMotorParameter(unsigned short *const nominal_current,
-                                     unsigned short *const max_output_current,
-                                     unsigned short *const thermal_time_constant,
+  Result< void > getDcMotorParameter(unsigned short *const nominal_current_ma,
+                                     unsigned short *const max_output_current_ma,
+                                     unsigned short *const thermal_time_constant_01sec) const {
+    typedef Result< void > ResultV;
+    unsigned int error_code;
+    return VCS_GetDcMotorParameter(device_.handle_.get(), id_, nominal_current_ma,
+                                   max_output_current_ma, thermal_time_constant_01sec,
+                                   &error_code) != 0
+               ? ResultV::success()
+               : ResultV::error(error_code);
+  }
+
+  Result< void > getDcMotorParameterSI(double *const nominal_current_a,
+                                       double *const max_output_current_a,
+                                       double *const thermal_time_constant_sec) const {
+    typedef Result< void > ResultV;
+
+    unsigned short nominal_current_ma, max_output_current_ma, thermal_time_constant_01sec;
+    const ResultV result_get(getDcMotorParameter(&nominal_current_ma, &max_output_current_ma,
+                                                 &thermal_time_constant_01sec));
+    if (result_get.isError()) {
+      return ResultV::error(result_get.errorCode());
+    }
+
+    *nominal_current_a = maToA(nominal_current_ma);
+    *max_output_current_a = maToA(max_output_current_ma);
+    *thermal_time_constant_sec = thermal_time_constant_01sec / 10.;
+    return ResultV::success();
+  }
+
+  Result< void > getEcMotorParameter(unsigned short *const nominal_current_ma,
+                                     unsigned short *const max_output_current_ma,
+                                     unsigned short *const thermal_time_constant_01sec,
                                      unsigned char *const n_pole_pairs) const {
     typedef Result< void > ResultV;
     unsigned int error_code;
-    return VCS_GetEcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
-                                   thermal_time_constant, n_pole_pairs, &error_code) != 0
+    return VCS_GetEcMotorParameter(device_.handle_.get(), id_, nominal_current_ma,
+                                   max_output_current_ma, thermal_time_constant_01sec, n_pole_pairs,
+                                   &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
   }
 
-  // TODO: getEcMotorParameterSI()
-
-  Result< void > getDcMotorParameter(unsigned short *const nominal_current,
-                                     unsigned short *const max_output_current,
-                                     unsigned short *const thermal_time_constant) const {
+  Result< void > getEcMotorParameterSI(double *const nominal_current_a,
+                                       double *const max_output_current_a,
+                                       double *const thermal_time_constant_sec,
+                                       unsigned char *const n_pole_pairs) const {
     typedef Result< void > ResultV;
-    unsigned int error_code;
-    return VCS_GetDcMotorParameter(device_.handle_.get(), id_, nominal_current, max_output_current,
-                                   thermal_time_constant, &error_code) != 0
-               ? ResultV::success()
-               : ResultV::error(error_code);
-  }
 
-  // TODO: getDcMotorParameterSI()
+    unsigned short nominal_current_ma, max_output_current_ma, thermal_time_constant_01sec;
+    const ResultV result_get(getEcMotorParameter(&nominal_current_ma, &max_output_current_ma,
+                                                 &thermal_time_constant_01sec, n_pole_pairs));
+    if (result_get.isError()) {
+      return ResultV::error(result_get.errorCode());
+    }
+
+    *nominal_current_a = maToA(nominal_current_ma);
+    *max_output_current_a = maToA(max_output_current_ma);
+    *thermal_time_constant_sec = thermal_time_constant_01sec / 10.;
+    return ResultV::success();
+  }
 
   Result< void > setSensorType(const unsigned short sensor_type) {
     typedef Result< void > ResultV;
