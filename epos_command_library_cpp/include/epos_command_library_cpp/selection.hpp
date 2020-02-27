@@ -109,6 +109,18 @@ getPortNameList(const std::string &device_name, const std::string &protocol_stac
   return ResultSV::success(port_names);
 }
 
+static inline Result< void > resetPortNameSelection(const std::string &device_name,
+                                                    const std::string &protocol_stack_name,
+                                                    const std::string &interface_name) {
+  typedef Result< void > ResultV;
+  unsigned int error_code;
+  return VCS_ResetPortNameSelection(const_cast< char * >(device_name.c_str()),
+                                    const_cast< char * >(protocol_stack_name.c_str()),
+                                    const_cast< char * >(interface_name.c_str()), &error_code) != 0
+             ? ResultV::success()
+             : ResultV::error(error_code);
+}
+
 static inline Result< std::vector< unsigned int > >
 getBaudrateList(const std::string &device_name, const std::string &protocol_stack_name,
                 const std::string &interface_name, const std::string &port_name) {
