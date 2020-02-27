@@ -41,4 +41,4 @@ ___operation_mode_map___ (map<string, string>, required)
 * possible operation mode names are 'current', 'disable', 'position', 'profile_position', 'profile_velocity', 'reset', & 'velocity'
 
 #### <u>Example</u>
-see [layered_hardware_epos/launch/single_epos_example.launch](layered_hardware_epos/launch/single_epos_example.launch)
+see [layered_hardware_epos/launch/single_epos4_example.launch](layered_hardware_epos/launch/single_epos4_example.launch)
