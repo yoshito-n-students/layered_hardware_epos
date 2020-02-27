@@ -77,12 +77,11 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
               const std::size_t n_indent) {
   try {
     const std::string indent(n_indent, '\t');
-    std::cout << indent << "Node Id: " << std::dec << path.node_id << std::endl;
-
     const eclc::Node node(device, path.node_id);
 
     // serial number
     const boost::uint64_t serial_number(*node.getSerialNumber());
+    std::cout << indent << "Node Id: " << std::dec << path.node_id << std::endl;
     std::cout << indent << "\tSerial number: 0x" << std::hex << serial_number << std::endl;
 
     // versions
