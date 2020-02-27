@@ -51,6 +51,10 @@ public:
                : ResultV::error(error_code);
   }
 
+  Result< void > setProtocolStackSettings(const unsigned int baudrate, const double timeout_sec) {
+    return setProtocolStackSettings(baudrate, static_cast< unsigned int >(timeout_sec * 1000.));
+  }
+
   Result< void > getProtocolStackSettings(unsigned int *const baudrate,
                                           unsigned int *const timeout_ms) const {
     typedef Result< void > ResultV;
@@ -58,6 +62,20 @@ public:
     return VCS_GetProtocolStackSettings(handle_.get(), baudrate, timeout_ms, &error_code) != 0
                ? ResultV::success()
                : ResultV::error(error_code);
+  }
+
+  Result< void > getProtocolStackSettings(unsigned int *const baudrate,
+                                          double *const timeout_sec) const {
+    typedef Result< void > ResultV;
+
+    unsigned int timeout_ms;
+    const ResultV result_get(getProtocolStackSettings(baudrate, &timeout_ms));
+    if (result_get.isError()) {
+      return ResultV::error(result_get.errorCode());
+    }
+
+    *timeout_sec = timeout_ms / 1000.;
+    return ResultV::success();
   }
 
   Result< void > setBaudrate(const unsigned int baudrate) {
@@ -100,6 +118,10 @@ public:
     return ResultV::success();
   }
 
+  Result< void > setTimeout(const double timeout_sec) {
+    return setTimeout(static_cast< unsigned int >(timeout_sec * 1000.));
+  }
+
   Result< unsigned int > getTimeout() const {
     typedef Result< unsigned int > ResultUI;
     unsigned int baudrate, timeout_ms;
@@ -107,6 +129,8 @@ public:
     return result_get.isSuccess() ? ResultUI::success(timeout_ms)
                                   : ResultUI::error(result_get.errorCode());
   }
+
+  // TODO: implement getTmeoutInSec()
 
   // ============
   // information
