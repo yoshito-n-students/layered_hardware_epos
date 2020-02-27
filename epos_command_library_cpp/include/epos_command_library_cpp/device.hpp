@@ -24,14 +24,19 @@ public:
                                const std::string &protocol_stack_name,
                                const std::string &interface_name, const std::string &port_name) {
     typedef Result< Device > ResultD;
-    Device device;
+
     unsigned int error_code;
-    device.handle_.reset(VCS_OpenDevice(const_cast< char * >(device_name.c_str()),
-                                        const_cast< char * >(protocol_stack_name.c_str()),
-                                        const_cast< char * >(interface_name.c_str()),
-                                        const_cast< char * >(port_name.c_str()), &error_code),
-                         Device::close);
-    return device.handle_ ? ResultD::success(device) : ResultD::error(error_code);
+    void *const handle(VCS_OpenDevice(const_cast< char * >(device_name.c_str()),
+                                      const_cast< char * >(protocol_stack_name.c_str()),
+                                      const_cast< char * >(interface_name.c_str()),
+                                      const_cast< char * >(port_name.c_str()), &error_code));
+    if (!handle) {
+      return ResultD::error(error_code);
+    }
+
+    Device device;
+    device.handle_.reset(handle, Device::close);
+    return ResultD::success(device);
   }
 
   // ========================
@@ -157,6 +162,7 @@ private:
       }
       // just print error info because the deleter of a shared_ptr must not throw
       std::cerr << "Device::close(): Failed to close a device handle: " << error_info << std::endl;
+      std::cout << handle << std::endl;
     }
   }
 
