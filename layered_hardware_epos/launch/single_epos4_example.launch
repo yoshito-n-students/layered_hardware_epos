@@ -21,6 +21,7 @@
                 interface: USB
                 port: USB0
                 baudrate: 1000000
+                timeout: 0.5
                 actuators:
                     motor:
                         id: 1

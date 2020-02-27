@@ -39,7 +39,7 @@ public:
     makeRegistered< hi::EffortActuatorInterface >(hw);
 
     // open epos device
-    const eclc::Result< eclc::Device > device(eclc::Device::open(
+    eclc::Result< eclc::Device > device(eclc::Device::open(
         // equivarent of param_nh.param< std::string >("device", "EPOS4") .
         // but we cannot call this becase NodeHandle::param() is not a const function (why???)
         rp::param< std::string >(param_nh.resolveName("device"), "EPOS4"),
@@ -49,6 +49,17 @@ public:
     if (device.isError()) {
       ROS_ERROR_STREAM(
           "EposActuatorLayer::init(): Failed to open an EPOS device: " << device.errorInfo());
+      return false;
+    }
+
+    // configure the epos device
+    const eclc::Result< void > result_setting(
+        device->setProtocolStackSettings(rp::param(param_nh.resolveName("baudrate"), 1000000),
+                                         rp::param(param_nh.resolveName("timeout"), 0.5)));
+    if (result_setting.isError()) {
+      ROS_ERROR_STREAM(
+          "EposActuatorLayer::init(): Failed to set protocol stack settings of an EPOS device: "
+          << result_setting.errorInfo());
       return false;
     }
 
