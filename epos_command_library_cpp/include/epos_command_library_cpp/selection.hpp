@@ -9,7 +9,7 @@
 
 namespace epos_command_library_cpp {
 
-static inline Result< std::vector< std::string > > getDeviceNameList() {
+static inline Result< std::vector< std::string > > getDeviceNameSelection() {
   typedef Result< std::vector< std::string > > ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
@@ -31,7 +31,7 @@ static inline Result< std::vector< std::string > > getDeviceNameList() {
 }
 
 static inline Result< std::vector< std::string > >
-getProtocolStackNameList(const std::string &device_name) {
+getProtocolStackNameSelection(const std::string &device_name) {
   typedef Result< std::vector< std::string > > ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
@@ -55,7 +55,7 @@ getProtocolStackNameList(const std::string &device_name) {
 }
 
 static inline Result< std::vector< std::string > >
-getInterfaceNameList(const std::string &device_name, const std::string &protocol_stack_name) {
+getInterfaceNameSelection(const std::string &device_name, const std::string &protocol_stack_name) {
   typedef Result< std::vector< std::string > > ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
@@ -81,8 +81,8 @@ getInterfaceNameList(const std::string &device_name, const std::string &protocol
 }
 
 static inline Result< std::vector< std::string > >
-getPortNameList(const std::string &device_name, const std::string &protocol_stack_name,
-                const std::string &interface_name) {
+getPortNameSelection(const std::string &device_name, const std::string &protocol_stack_name,
+                     const std::string &interface_name) {
   typedef Result< std::vector< std::string > > ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL

@@ -199,8 +199,9 @@ void listNodesOnInterface(const Path &path, const Configs &configs, const std::s
   }
 
   // list nodes on the interface
+  *eclc::resetPortNameSelection(path.device, path.protocol_stack, path.interface);
   const std::vector< std::string > ports(
-      *eclc::getPortNameList(path.device, path.protocol_stack, path.interface));
+      *eclc::getPortNameSelection(path.device, path.protocol_stack, path.interface));
   BOOST_FOREACH (const std::string &port, ports) {
     listNodesOnPort(Path(path.device, path.protocol_stack, path.interface, port), configs,
                     n_indent + 1);
@@ -213,7 +214,7 @@ void listNodesOnProtocolStack(const Path &path, const Configs &configs,
   std::cout << indent << path.protocol_stack << std::endl;
 
   const std::vector< std::string > interfaces(
-      *eclc::getInterfaceNameList(path.device, path.protocol_stack));
+      *eclc::getInterfaceNameSelection(path.device, path.protocol_stack));
   BOOST_FOREACH (const std::string &interface, interfaces) {
     listNodesOnInterface(Path(path.device, path.protocol_stack, interface), configs, n_indent + 1);
   }
@@ -223,7 +224,8 @@ void listNodesOnDevice(const Path &path, const Configs &configs, const std::size
   const std::string indent(n_indent, '\t');
   std::cout << indent << path.device << std::endl;
 
-  const std::vector< std::string > protocol_stacks(*eclc::getProtocolStackNameList(path.device));
+  const std::vector< std::string > protocol_stacks(
+      *eclc::getProtocolStackNameSelection(path.device));
   BOOST_FOREACH (const std::string &protocol_stack, protocol_stacks) {
     listNodesOnProtocolStack(Path(path.device, protocol_stack), configs, n_indent + 1);
   }
@@ -231,7 +233,7 @@ void listNodesOnDevice(const Path &path, const Configs &configs, const std::size
 
 void listAllNodes(const Configs &configs, const std::size_t n_indent = 0) {
   try {
-    const std::vector< std::string > devices(*eclc::getDeviceNameList());
+    const std::vector< std::string > devices(*eclc::getDeviceNameSelection());
     BOOST_FOREACH (const std::string &device, devices) {
       listNodesOnDevice(Path(device), configs, n_indent);
     }
