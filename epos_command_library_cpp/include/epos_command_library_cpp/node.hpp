@@ -114,6 +114,8 @@ public:
                : ResultV::error(error_code);
   }
 
+  // TODO: setDcMotorParameterSI()
+
   Result< void > setEcMotorParameter(const unsigned short nominal_current,
                                      const unsigned short max_output_current,
                                      const unsigned short thermal_time_constant,
@@ -125,6 +127,8 @@ public:
                ? ResultV::success()
                : ResultV::error(error_code);
   }
+
+  // TODO: setEcMotorParameterSI()
 
   Result< unsigned short > getMotorType() const {
     typedef Result< unsigned short > ResultUS;
@@ -147,6 +151,8 @@ public:
                : ResultV::error(error_code);
   }
 
+  // TODO: getEcMotorParameterSI()
+
   Result< void > getDcMotorParameter(unsigned short *const nominal_current,
                                      unsigned short *const max_output_current,
                                      unsigned short *const thermal_time_constant) const {
@@ -157,6 +163,8 @@ public:
                ? ResultV::success()
                : ResultV::error(error_code);
   }
+
+  // TODO: getDcMotorParameterSI()
 
   Result< void > setSensorType(const unsigned short sensor_type) {
     typedef Result< void > ResultV;
@@ -214,6 +222,8 @@ public:
                ? ResultV::success()
                : ResultV::error(error_code);
   }
+
+  // TODO: setSsiAbsEncoderParameterExSI()
 
   Result< unsigned short > getSensorType() const {
     typedef Result< unsigned short > ResultUS;
@@ -289,6 +299,8 @@ public:
     *inverted_polarity = (inverted_polarity_int != 0);
     return ResultV::success();
   }
+
+  // TODO: setSsiAbsEncoderParameterExSI()
 
   // ===============
   // operation mode
@@ -446,7 +458,7 @@ public:
   }
 
   // get position in rad
-  Result< double > getPosition(const int count_per_revolution) const {
+  Result< double > getPositionSI(const int count_per_revolution) const {
     typedef Result< double > ResultD;
     const Result< int > position_count(getPositionIs());
     return position_count.isSuccess()
@@ -465,7 +477,7 @@ public:
   }
 
   // get velocity in rad/s
-  Result< double > getVelocity() const {
+  Result< double > getVelocitySI() const {
     typedef Result< double > ResultD;
     const Result< int > velocity_rpm(getVelocityIs());
     return velocity_rpm.isSuccess() ? ResultD::success(rpmToRadps(*velocity_rpm))
@@ -483,16 +495,16 @@ public:
   }
 
   // get current in A
-  Result< double > getCurrent() const {
+  Result< double > getCurrentSI() const {
     typedef Result< double > ResultD;
     const Result< short > current_ma(getCurrentIs());
     return current_ma.isSuccess() ? ResultD::success(maToA(*current_ma))
                                   : ResultD::error(current_ma.errorCode());
   }
 
-  Result< double > getTorque(const double torque_constant) const {
+  Result< double > getTorqueSI(const double torque_constant) const {
     typedef Result< double > ResultD;
-    const ResultD current_a(getCurrent());
+    const ResultD current_a(getCurrentSI());
     return current_a.isSuccess() ? ResultD::success(aToN(*current_a, torque_constant))
                                  : ResultD::error(current_a.errorCode());
   }
@@ -518,8 +530,8 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > moveToPosition(const double target_position_rad, const int count_per_revolution,
-                                const bool absolute, const bool immediately) {
+  Result< void > moveToPositionSI(const double target_position_rad, const int count_per_revolution,
+                                  const bool absolute, const bool immediately) {
     return moveToPosition(radToCount(target_position_rad, count_per_revolution), absolute,
                           immediately);
   }
@@ -536,9 +548,9 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setPositionProfile(const double profile_velocity_radps,
-                                    const double profile_acceleration_radps2,
-                                    const double profile_deceleration_radps2) {
+  Result< void > setPositionProfileSI(const double profile_velocity_radps,
+                                      const double profile_acceleration_radps2,
+                                      const double profile_deceleration_radps2) {
     return setPositionProfile(static_cast< unsigned int >(radpsToRpm(profile_velocity_radps)),
                               static_cast< unsigned int >(radpsToRpm(profile_acceleration_radps2)),
                               static_cast< unsigned int >(radpsToRpm(profile_deceleration_radps2)));
@@ -556,9 +568,9 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > getPositionProfile(double *const profile_velocity_radps,
-                                    double *const profile_acceleration_radps2,
-                                    double *const profile_deceleration_radps2) const {
+  Result< void > getPositionProfileSI(double *const profile_velocity_radps,
+                                      double *const profile_acceleration_radps2,
+                                      double *const profile_deceleration_radps2) const {
     typedef Result< void > ResultV;
 
     unsigned int vel_rpm, acc_rpmps, dec_rpmps;
@@ -592,7 +604,7 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setPositionMust(const double position_must_rad, const int count_per_revolution) {
+  Result< void > setPositionMustSI(const double position_must_rad, const int count_per_revolution) {
     return setPositionMust(radToCount(position_must_rad, count_per_revolution));
   }
 
@@ -615,7 +627,7 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > moveWithVelocity(const double target_velocity_radps) {
+  Result< void > moveWithVelocitySI(const double target_velocity_radps) {
     return moveWithVelocity(radpsToRpm(target_velocity_radps));
   }
 
@@ -629,8 +641,8 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setVelocityProfile(const double profile_acceleration_radps2,
-                                    const double profile_deceleration_radps2) {
+  Result< void > setVelocityProfileSI(const double profile_acceleration_radps2,
+                                      const double profile_deceleration_radps2) {
     return setVelocityProfile(static_cast< unsigned int >(radpsToRpm(profile_acceleration_radps2)),
                               static_cast< unsigned int >(radpsToRpm(profile_deceleration_radps2)));
   }
@@ -645,8 +657,8 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > getVelocityProfile(double *const profile_acceleration_radps2,
-                                    double *const profile_deceleration_radps2) const {
+  Result< void > getVelocityProfileSI(double *const profile_acceleration_radps2,
+                                      double *const profile_deceleration_radps2) const {
     typedef Result< void > ResultV;
 
     unsigned int acc_rpmps, dec_rpmps;
@@ -679,7 +691,7 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setVelocityMust(const double velocity_must_radps) {
+  Result< void > setVelocityMustSI(const double velocity_must_radps) {
     return setVelocityMust(radpsToRpm(velocity_must_radps));
   }
 
@@ -702,11 +714,11 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setCurrentMust(const double current_must_a) {
+  Result< void > setCurrentMustSI(const double current_must_a) {
     return setCurrentMust(aToMa(current_must_a));
   }
 
-  Result< void > setTorqueMust(const double torque_must, const double torque_constant) {
+  Result< void > setTorqueMustSI(const double torque_must, const double torque_constant) {
     return setCurrentMust(nToA(torque_must, torque_constant));
   }
 

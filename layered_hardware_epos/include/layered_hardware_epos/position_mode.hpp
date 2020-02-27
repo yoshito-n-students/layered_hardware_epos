@@ -26,7 +26,7 @@ public:
       *data_->node.activatePositionMode();
 
       // set reasonable initial command
-      data_->pos_cmd = *data_->node.getPosition(data_->count_per_revolution);
+      data_->pos_cmd = *data_->node.getPositionSI(data_->count_per_revolution);
       prev_pos_cmd_ = std::numeric_limits< double >::quiet_NaN();
 
       has_started_ = true;
@@ -43,9 +43,9 @@ public:
     }
 
     try {
-      data_->pos = *data_->node.getPosition(data_->count_per_revolution);
-      data_->vel = *data_->node.getVelocity();
-      data_->eff = *data_->node.getTorque(data_->torque_constant);
+      data_->pos = *data_->node.getPositionSI(data_->count_per_revolution);
+      data_->vel = *data_->node.getVelocitySI();
+      data_->eff = *data_->node.getTorqueSI(data_->torque_constant);
     } catch (const eclc::Exception &error) {
       ROS_ERROR_STREAM("PositionMode::read(): " << data_->nodeDescription() << ": "
                                                 << error.what());
@@ -59,7 +59,7 @@ public:
 
     try {
       if (!boost::math::isnan(data_->pos_cmd) && data_->pos_cmd != prev_pos_cmd_) {
-        *data_->node.setPositionMust(data_->pos_cmd, data_->count_per_revolution);
+        *data_->node.setPositionMustSI(data_->pos_cmd, data_->count_per_revolution);
         prev_pos_cmd_ = data_->pos_cmd;
       }
     } catch (const eclc::Exception &error) {

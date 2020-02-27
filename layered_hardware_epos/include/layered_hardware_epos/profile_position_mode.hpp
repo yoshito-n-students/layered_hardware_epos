@@ -27,11 +27,11 @@ public:
       *data_->node.activateProfilePositionMode();
 
       // initialize position command using present position
-      data_->pos_cmd = *data_->node.getPosition(data_->count_per_revolution);
+      data_->pos_cmd = *data_->node.getPositionSI(data_->count_per_revolution);
       prev_pos_cmd_ = std::numeric_limits< double >::quiet_NaN();
 
       // initialize profile velocity command using present value
-      *data_->node.getPositionProfile(&data_->vel_cmd, &prof_acc_, &prof_dec_);
+      *data_->node.getPositionProfileSI(&data_->vel_cmd, &prof_acc_, &prof_dec_);
       prev_vel_cmd_ = data_->vel_cmd;
 
       has_started_ = true;
@@ -48,9 +48,9 @@ public:
 
     try {
       // read actuator states
-      data_->pos = *data_->node.getPosition(data_->count_per_revolution);
-      data_->vel = *data_->node.getVelocity();
-      data_->eff = *data_->node.getTorque(data_->torque_constant);
+      data_->pos = *data_->node.getPositionSI(data_->count_per_revolution);
+      data_->vel = *data_->node.getVelocitySI();
+      data_->eff = *data_->node.getTorqueSI(data_->torque_constant);
     } catch (const eclc::Exception &error) {
       ROS_ERROR_STREAM("ProfilePositionMode::read(): " << data_->nodeDescription() << ": "
                                                        << error.what());
@@ -65,14 +65,14 @@ public:
     try {
       // write profile velocity if command has been updated to be positive
       if (data_->vel_cmd > 0. && data_->vel_cmd != prev_vel_cmd_) {
-        *data_->node.setPositionProfile(data_->vel_cmd, prof_acc_, prof_dec_);
+        *data_->node.setPositionProfileSI(data_->vel_cmd, prof_acc_, prof_dec_);
         prev_vel_cmd_ = data_->vel_cmd;
       }
 
       // write position command if updated
       if (!boost::math::isnan(data_->pos_cmd) && data_->pos_cmd != prev_pos_cmd_) {
-        *data_->node.moveToPosition(data_->pos_cmd, data_->count_per_revolution,
-                                    /* absolute = */ true, /* immediately = */ true);
+        *data_->node.moveToPositionSI(data_->pos_cmd, data_->count_per_revolution,
+                                      /* absolute = */ true, /* immediately = */ true);
         prev_pos_cmd_ = data_->pos_cmd;
       }
     } catch (const eclc::Exception &error) {

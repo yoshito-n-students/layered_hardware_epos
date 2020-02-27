@@ -44,9 +44,9 @@ public:
     }
 
     try {
-      data_->pos = *data_->node.getPosition(data_->count_per_revolution);
-      data_->vel = *data_->node.getVelocity();
-      data_->eff = *data_->node.getTorque(data_->torque_constant);
+      data_->pos = *data_->node.getPositionSI(data_->count_per_revolution);
+      data_->vel = *data_->node.getVelocitySI();
+      data_->eff = *data_->node.getTorqueSI(data_->torque_constant);
     } catch (const eclc::Exception &error) {
       ROS_ERROR_STREAM("ProfileVelocityMode::read(): " << data_->nodeDescription() << ": "
                                                        << error.what());
@@ -60,7 +60,7 @@ public:
 
     try {
       if (!boost::math::isnan(data_->vel_cmd) && data_->vel_cmd != prev_vel_cmd_) {
-        *data_->node.moveWithVelocity(data_->vel_cmd);
+        *data_->node.moveWithVelocitySI(data_->vel_cmd);
         prev_vel_cmd_ = data_->vel_cmd;
       }
     } catch (const eclc::Exception &error) {

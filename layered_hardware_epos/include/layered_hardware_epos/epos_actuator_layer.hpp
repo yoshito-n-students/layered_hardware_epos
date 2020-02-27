@@ -54,8 +54,8 @@ public:
 
     // configure the epos device
     const eclc::Result< void > result_setting(
-        device->setProtocolStackSettings(rp::param(param_nh.resolveName("baudrate"), 1000000),
-                                         rp::param(param_nh.resolveName("timeout"), 0.5)));
+        device->setProtocolStackSettingsSI(rp::param(param_nh.resolveName("baudrate"), 1000000),
+                                           rp::param(param_nh.resolveName("timeout"), 0.5)));
     if (result_setting.isError()) {
       ROS_ERROR_STREAM(
           "EposActuatorLayer::init(): Failed to set protocol stack settings of an EPOS device: "

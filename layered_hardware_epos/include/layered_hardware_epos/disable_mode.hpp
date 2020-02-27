@@ -37,9 +37,9 @@ public:
     }
 
     try {
-      data_->pos = *data_->node.getPosition(data_->count_per_revolution);
-      data_->vel = *data_->node.getVelocity();
-      data_->eff = *data_->node.getTorque(data_->torque_constant);
+      data_->pos = *data_->node.getPositionSI(data_->count_per_revolution);
+      data_->vel = *data_->node.getVelocitySI();
+      data_->eff = *data_->node.getTorqueSI(data_->torque_constant);
     } catch (const eclc::Exception &error) {
       ROS_ERROR_STREAM("DisableMode::read(): " << data_->nodeDescription() << ": " << error.what());
     }
