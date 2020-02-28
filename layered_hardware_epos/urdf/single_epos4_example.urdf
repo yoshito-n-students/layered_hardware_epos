@@ -10,7 +10,7 @@
     <transmission name="trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="axis">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PosVelJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
             <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
         </joint>
