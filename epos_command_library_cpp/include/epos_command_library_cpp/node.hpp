@@ -3,6 +3,7 @@
 
 #include <cmath> // for M_PI
 #include <string>
+#include <vector>
 
 #include <epos_command_library/Definitions.h>
 #include <epos_command_library_cpp/device.hpp>
@@ -541,6 +542,26 @@ public:
                                   &error_code) != 0
                ? ResultUI::success(device_error_code)
                : ResultUI::error(error_code);
+  }
+
+  Result< std::vector< unsigned int > > getDeviceErrorCodes() const {
+    typedef Result< std::vector< unsigned int > > ResultUIV;
+
+    const Result< unsigned char > n_dev_errors(getNbOfDeviceError());
+    if (n_dev_errors.isError()) {
+      return ResultUIV::error(n_dev_errors.errorCode());
+    }
+
+    std::vector< unsigned int > dev_errors;
+    for (unsigned char i = 1; i <= *n_dev_errors; ++i) {
+      const Result< unsigned int > dev_error(getDeviceErrorCode(i));
+      if (dev_error.isError()) {
+        return ResultUIV::error(dev_error.errorCode());
+      }
+      dev_errors.push_back(*dev_error);
+    }
+
+    return ResultUIV::success(dev_errors);
   }
 
   // =============

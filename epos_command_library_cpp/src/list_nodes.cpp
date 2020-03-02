@@ -159,6 +159,13 @@ void listNode(const eclc::Device &device, const Path &path, const Configs &confi
       std::cout << indent << "\tSensor type: Unknown (" << std::dec << sensor_type << ")"
                 << std::endl;
     }
+
+    // error history in node
+    const std::vector< unsigned int > dev_errors(*node.getDeviceErrorCodes());
+    std::cout << indent << "\tDevice errors: " << dev_errors.size() << std::endl;
+    for (std::size_t i = 0; i < dev_errors.size(); ++i) {
+      std::cout << indent << "\t\t[" << i + 1 << "]: 0x" << std::hex << dev_errors[i] << std::endl;
+    }
   } catch (const eclc::Exception &error) {
     // catching an error indicates the node does not exist. nothing to show.
   }
