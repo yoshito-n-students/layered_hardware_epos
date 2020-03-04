@@ -80,13 +80,14 @@ public:
     // (could not use BOOST_FOREACH here to avoid a bug in the library in Kinetic)
     for (XmlRpc::XmlRpcValue::iterator ator_param = ators_param.begin();
          ator_param != ators_param.end(); ++ator_param) {
-      EposActuatorPtr ator(new EposActuator());
-      ros::NodeHandle ator_param_nh(param_nh, ros::names::append("actuators", ator_param->first));
-      if (!ator->init(ator_param->first, *device, hw, ator_param_nh)) {
+      const EposActuatorPtr ator(new EposActuator());
+      const std::string &ator_name(ator_param->first);
+      ros::NodeHandle ator_param_nh(param_nh, ros::names::append("actuators", ator_name));
+      if (!ator->init(ator_name, *device, hw, ator_param_nh)) {
+        ROS_ERROR_STREAM("EposActuatorLayer::init(): Failed to init the actuator '" << ator_name);
         return false;
       }
-      ROS_INFO_STREAM("EposActuatorLayer::init(): Initialized the actuator '" << ator_param->first
-                                                                              << "'");
+      ROS_INFO_STREAM("EposActuatorLayer::init(): Initialized the actuator '" << ator_name << "'");
       actuators_.push_back(ator);
     }
 
