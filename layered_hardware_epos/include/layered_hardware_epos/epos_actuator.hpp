@@ -39,9 +39,9 @@ public:
   virtual ~EposActuator() {
     // finalize the present mode
     if (present_mode_) {
-      ROS_INFO_STREAM("EposActuator::~EposActuator(): Stopping operation mode '"
-                      << present_mode_->getName() << "' for actuator '" << data_->name
-                      << "' (id: " << data_->node.getId() << ")");
+      ROS_INFO_STREAM("EposActuator::~EposActuator(): " << data_->nodeDescription()
+                                                        << ": Stopping operation mode '"
+                                                        << present_mode_->getName() << "'");
       present_mode_->stopping();
       present_mode_ = OperationModePtr();
     }
