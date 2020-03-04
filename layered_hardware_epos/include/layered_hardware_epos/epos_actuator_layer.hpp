@@ -45,7 +45,7 @@ public:
         rp::param< std::string >(param_nh.resolveName("device"), "EPOS4"),
         rp::param< std::string >(param_nh.resolveName("protocol_stack"), "MAXON SERIAL V2"),
         rp::param< std::string >(param_nh.resolveName("interface"), "USB"),
-        rp::param< std::string >(param_nh.resolveName("port"), "/dev/ttyUSB0")));
+        rp::param< std::string >(param_nh.resolveName("port"), "USB0")));
     if (device.isError()) {
       ROS_ERROR_STREAM(
           "EposActuatorLayer::init(): Failed to open an EPOS device: " << device.errorInfo());
