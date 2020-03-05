@@ -10,6 +10,7 @@
 #include <hardware_interface/actuator_state_interface.h>
 #include <hardware_interface/controller_info.h>
 #include <hardware_interface/robot_hw.h>
+#include <layered_hardware_epos/clear_fault_mode.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/current_mode.hpp>
 #include <layered_hardware_epos/disable_mode.hpp>
@@ -209,7 +210,9 @@ private:
   }
 
   OperationModePtr makeOperationMode(const std::string &mode_str) {
-    if (mode_str == "current") {
+    if (mode_str == "clear_fault") {
+      return boost::make_shared< ClearFaultMode >(data_);
+    } else if (mode_str == "current") {
       return boost::make_shared< CurrentMode >(data_);
     } else if (mode_str == "disable") {
       return boost::make_shared< DisableMode >(data_);

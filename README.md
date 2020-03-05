@@ -38,7 +38,7 @@ ___torque_constant___ (double, required)
 
 ___operation_mode_map___ (map<string, string>, required)
 * map from ROS's controller names to EPOS driver's operation mode names
-* possible operation mode names are 'current', 'disable', 'position', 'profile_position', 'profile_velocity', 'reset', & 'velocity'
+* possible operation mode names are 'clear_fault', 'current', 'disable', 'position', 'profile_position', 'profile_velocity', 'reset', & 'velocity'
 
 #### <u>Example</u>
 see [layered_hardware_epos/launch/single_epos4_example.launch](layered_hardware_epos/launch/single_epos4_example.launch)
