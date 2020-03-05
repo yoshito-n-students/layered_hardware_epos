@@ -21,8 +21,8 @@ public:
     try {
       *data_->node.resetDevice();
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("DisableMode::starting(): " << data_->nodeDescription() << ": "
-                                                   << error.what());
+      ROS_ERROR_STREAM("ResetMode::starting(): " << data_->nodeDescription() << ": "
+                                                 << error.what());
     }
   }
 
