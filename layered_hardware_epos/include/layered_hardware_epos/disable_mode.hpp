@@ -1,8 +1,6 @@
 #ifndef LAYERED_HARDWARE_EPOS_DISABLE_MODE_HPP
 #define LAYERED_HARDWARE_EPOS_DISABLE_MODE_HPP
 
-#include <limits>
-
 #include <epos_command_library_cpp/exception.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/epos_actuator_data.hpp>

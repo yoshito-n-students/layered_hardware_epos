@@ -6,6 +6,7 @@
 #include <string>
 
 #include <epos_command_library_cpp/device.hpp>
+#include <epos_command_library_cpp/node.hpp>
 #include <hardware_interface/actuator_command_interface.h>
 #include <hardware_interface/actuator_state_interface.h>
 #include <hardware_interface/controller_info.h>
@@ -22,11 +23,9 @@
 #include <layered_hardware_epos/velocity_mode.hpp>
 #include <ros/console.h>
 #include <ros/duration.h>
-#include <ros/names.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
 
-#include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
