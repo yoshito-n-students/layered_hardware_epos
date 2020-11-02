@@ -1,6 +1,7 @@
 #ifndef LAYERED_HARDWARE_EPOS_VELOCITY_MODE_HPP
 #define LAYERED_HARDWARE_EPOS_VELOCITY_MODE_HPP
 
+#include <cmath>
 #include <limits>
 
 #include <epos_command_library_cpp/exception.hpp>
@@ -11,15 +12,13 @@
 #include <ros/duration.h>
 #include <ros/time.h>
 
-#include <boost/math/special_functions/fpclassify.hpp> // for isnan()
-
 namespace layered_hardware_epos {
 
 class VelocityMode : public OperationModeBase {
 public:
   VelocityMode(const EposActuatorDataPtr &data) : OperationModeBase("velocity", data) {}
 
-  virtual void starting() {
+  virtual void starting() override {
     try {
       // switch to velocity mode
       *data_->node.setEnableState();
@@ -37,7 +36,7 @@ public:
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     if (!has_started_) {
       return;
     }
@@ -52,13 +51,13 @@ public:
     }
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     if (!has_started_) {
       return;
     }
 
     try {
-      if (!boost::math::isnan(data_->vel_cmd) && data_->vel_cmd != prev_vel_cmd_) {
+      if (!std::isnan(data_->vel_cmd) && data_->vel_cmd != prev_vel_cmd_) {
         *data_->node.setVelocityMustSI(data_->vel_cmd);
         prev_vel_cmd_ = data_->vel_cmd;
       }
@@ -68,7 +67,7 @@ public:
     }
   }
 
-  virtual void stopping() {
+  virtual void stopping() override {
     try {
       *data_->node.setDisableState();
     } catch (const eclc::Exception &error) {

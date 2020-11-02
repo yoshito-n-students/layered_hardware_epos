@@ -7,8 +7,6 @@
 #include <ros/duration.h>
 #include <ros/time.h>
 
-#include <boost/shared_ptr.hpp>
-
 namespace layered_hardware_epos {
 
 class OperationModeBase {
@@ -34,8 +32,8 @@ protected:
   const EposActuatorDataPtr data_;
 };
 
-typedef boost::shared_ptr< OperationModeBase > OperationModePtr;
-typedef boost::shared_ptr< const OperationModeBase > OperationModeConstPtr;
+typedef std::shared_ptr< OperationModeBase > OperationModePtr;
+typedef std::shared_ptr< const OperationModeBase > OperationModeConstPtr;
 } // namespace layered_hardware_epos
 
 #endif

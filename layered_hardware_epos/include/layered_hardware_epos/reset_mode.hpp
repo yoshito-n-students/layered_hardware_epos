@@ -17,7 +17,7 @@ class ResetMode : public OperationModeBase {
 public:
   ResetMode(const EposActuatorDataPtr &data) : OperationModeBase("reset", data) {}
 
-  virtual void starting() {
+  virtual void starting() override {
     try {
       *data_->node.resetDevice();
     } catch (const eclc::Exception &error) {
@@ -26,15 +26,15 @@ public:
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     // nothing to do
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // nothing to do
   }
 
-  virtual void stopping() {
+  virtual void stopping() override {
     // nothing to do
   }
 };

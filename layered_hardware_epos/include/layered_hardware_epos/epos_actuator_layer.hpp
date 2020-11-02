@@ -21,14 +21,12 @@
 #include <ros/time.h>
 #include <xmlrpcpp/XmlRpcValue.h>
 
-#include <boost/foreach.hpp>
-
 namespace layered_hardware_epos {
 
 class EposActuatorLayer : public lh::LayerBase {
 public:
   virtual bool init(hi::RobotHW *const hw, const ros::NodeHandle &param_nh,
-                    const std::string &urdf_str) {
+                    const std::string &urdf_str) override {
     namespace rp = ros::param;
 
     // make actuator interfaces registered to the hardware
@@ -77,11 +75,9 @@ public:
     }
 
     // init actuators with param "actuators/<actuator_name>"
-    // (could not use BOOST_FOREACH here to avoid a bug in the library in Kinetic)
-    for (XmlRpc::XmlRpcValue::iterator ator_param = ators_param.begin();
-         ator_param != ators_param.end(); ++ator_param) {
+    for (const XmlRpc::XmlRpcValue::ValueStruct::value_type &ator_param : ators_param) {
       const EposActuatorPtr ator(new EposActuator());
-      const std::string &ator_name(ator_param->first);
+      const std::string &ator_name(ator_param.first);
       ros::NodeHandle ator_param_nh(param_nh, ros::names::append("actuators", ator_name));
       if (!ator->init(ator_name, *device, hw, ator_param_nh)) {
         ROS_ERROR_STREAM("EposActuatorLayer::init(): Failed to init the actuator '" << ator_name);
@@ -95,9 +91,9 @@ public:
   }
 
   virtual bool prepareSwitch(const std::list< hi::ControllerInfo > &start_list,
-                             const std::list< hi::ControllerInfo > &stop_list) {
+                             const std::list< hi::ControllerInfo > &stop_list) override {
     // ask to all actuators if controller switching is possible
-    BOOST_FOREACH (const EposActuatorPtr &ator, actuators_) {
+    for (const EposActuatorPtr &ator : actuators_) {
       if (!ator->prepareSwitch(start_list, stop_list)) {
         return false;
       }
@@ -106,21 +102,25 @@ public:
   }
 
   virtual void doSwitch(const std::list< hi::ControllerInfo > &start_list,
-                        const std::list< hi::ControllerInfo > &stop_list) {
+                        const std::list< hi::ControllerInfo > &stop_list) override {
     // notify controller switching to all actuators
-    BOOST_FOREACH (const EposActuatorPtr &ator, actuators_) {
+    for (const EposActuatorPtr &ator : actuators_) {
       ator->doSwitch(start_list, stop_list);
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     // read from all actuators
-    BOOST_FOREACH (const EposActuatorPtr &ator, actuators_) { ator->read(time, period); }
+    for (const EposActuatorPtr &ator : actuators_) {
+      ator->read(time, period);
+    }
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // write to all actuators
-    BOOST_FOREACH (const EposActuatorPtr &ator, actuators_) { ator->write(time, period); }
+    for (const EposActuatorPtr &ator : actuators_) {
+      ator->write(time, period);
+    }
   }
 
 private:

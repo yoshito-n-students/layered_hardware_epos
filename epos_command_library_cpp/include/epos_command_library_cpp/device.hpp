@@ -2,12 +2,11 @@
 #define EPOS_COMMAND_LIBRARY_CPP_DEVICE_HPP
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <epos_command_library/Definitions.h>
 #include <epos_command_library_cpp/result.hpp>
-
-#include <boost/shared_ptr.hpp>
 
 namespace epos_command_library_cpp {
 
@@ -196,7 +195,7 @@ private:
   }
 
 private:
-  boost::shared_ptr< void > handle_;
+  std::shared_ptr< void > handle_;
 };
 } // namespace epos_command_library_cpp
 

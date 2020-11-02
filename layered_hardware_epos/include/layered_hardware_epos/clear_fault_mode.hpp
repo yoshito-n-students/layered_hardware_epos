@@ -15,7 +15,7 @@ class ClearFaultMode : public OperationModeBase {
 public:
   ClearFaultMode(const EposActuatorDataPtr &data) : OperationModeBase("clear_fault", data) {}
 
-  virtual void starting() {
+  virtual void starting() override {
     try {
       *data_->node.clearFault();
     } catch (const eclc::Exception &error) {
@@ -24,15 +24,15 @@ public:
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     // nothing to do
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // nothing to do
   }
 
-  virtual void stopping() {
+  virtual void stopping() override {
     // nothing to do
   }
 };

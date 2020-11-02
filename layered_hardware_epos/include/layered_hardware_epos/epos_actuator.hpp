@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 
 #include <epos_command_library_cpp/device.hpp>
@@ -25,10 +26,6 @@
 #include <ros/duration.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
-
-#include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace layered_hardware_epos {
 
@@ -90,14 +87,13 @@ public:
     }
 
     // make operation mode map from ros-controller name to EPOS's operation mode
-    typedef std::map< std::string, std::string > ModeNameMap;
-    ModeNameMap mode_name_map;
+    std::map< std::string, std::string > mode_name_map;
     if (!param_nh.getParam("operation_mode_map", mode_name_map)) {
       ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
                        << param_nh.resolveName("operation_mode_map") << "'");
       return false;
     }
-    BOOST_FOREACH (const ModeNameMap::value_type &mode_name, mode_name_map) {
+    for (const std::map< std::string, std::string >::value_type &mode_name : mode_name_map) {
       const OperationModePtr mode(makeOperationMode(mode_name.second));
       if (!mode) {
         ROS_ERROR_STREAM("EposActuator::init(): " << data_->nodeDescription()
@@ -120,7 +116,7 @@ public:
 
     // number of modes after stopping controllers
     if (n_modes != 0) {
-      BOOST_FOREACH (const hi::ControllerInfo &stopping_controller, stopping_controller_list) {
+      for (const hi::ControllerInfo &stopping_controller : stopping_controller_list) {
         const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
             mode_map_.find(stopping_controller.name));
         if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
@@ -131,7 +127,7 @@ public:
     }
 
     // number of modes after starting controllers
-    BOOST_FOREACH (const hi::ControllerInfo &starting_controller, starting_controller_list) {
+    for (const hi::ControllerInfo &starting_controller : starting_controller_list) {
       const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
           mode_map_.find(starting_controller.name));
       if (mode_to_start != mode_map_.end() && mode_to_start->second) {
@@ -153,7 +149,7 @@ public:
                 const std::list< hi::ControllerInfo > &stopping_controller_list) {
     // stop actuator's operation mode according to stopping controller list
     if (present_mode_) {
-      BOOST_FOREACH (const hi::ControllerInfo &stopping_controller, stopping_controller_list) {
+      for (const hi::ControllerInfo &stopping_controller : stopping_controller_list) {
         const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
             mode_map_.find(stopping_controller.name));
         if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
@@ -169,7 +165,7 @@ public:
 
     // start actuator's operation modes according to starting controllers
     if (!present_mode_) {
-      BOOST_FOREACH (const hi::ControllerInfo &starting_controller, starting_controller_list) {
+      for (const hi::ControllerInfo &starting_controller : starting_controller_list) {
         const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
             mode_map_.find(starting_controller.name));
         if (mode_to_start != mode_map_.end() && mode_to_start->second) {
@@ -210,21 +206,21 @@ private:
 
   OperationModePtr makeOperationMode(const std::string &mode_str) {
     if (mode_str == "clear_fault") {
-      return boost::make_shared< ClearFaultMode >(data_);
+      return std::make_shared< ClearFaultMode >(data_);
     } else if (mode_str == "current") {
-      return boost::make_shared< CurrentMode >(data_);
+      return std::make_shared< CurrentMode >(data_);
     } else if (mode_str == "disable") {
-      return boost::make_shared< DisableMode >(data_);
+      return std::make_shared< DisableMode >(data_);
     } else if (mode_str == "position") {
-      return boost::make_shared< PositionMode >(data_);
+      return std::make_shared< PositionMode >(data_);
     } else if (mode_str == "profile_position") {
-      return boost::make_shared< ProfilePositionMode >(data_);
+      return std::make_shared< ProfilePositionMode >(data_);
     } else if (mode_str == "profile_velocity") {
-      return boost::make_shared< ProfileVelocityMode >(data_);
+      return std::make_shared< ProfileVelocityMode >(data_);
     } else if (mode_str == "reset") {
-      return boost::make_shared< ResetMode >(data_);
+      return std::make_shared< ResetMode >(data_);
     } else if (mode_str == "velocity") {
-      return boost::make_shared< VelocityMode >(data_);
+      return std::make_shared< VelocityMode >(data_);
     } else {
       ROS_ERROR_STREAM("EposActuator::makeOperationMode(): " << data_->nodeDescription()
                                                              << ": Unknown operation mode name '"
@@ -240,8 +236,8 @@ private:
   OperationModePtr present_mode_;
 };
 
-typedef boost::shared_ptr< EposActuator > EposActuatorPtr;
-typedef boost::shared_ptr< const EposActuator > EposActuatorConstPtr;
+typedef std::shared_ptr< EposActuator > EposActuatorPtr;
+typedef std::shared_ptr< const EposActuator > EposActuatorConstPtr;
 } // namespace layered_hardware_epos
 
 #endif

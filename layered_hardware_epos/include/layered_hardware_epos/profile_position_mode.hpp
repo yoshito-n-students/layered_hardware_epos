@@ -1,6 +1,7 @@
 #ifndef LAYERED_HARDWARE_EPOS_PROFILE_POSITION_MODE_HPP
 #define LAYERED_HARDWARE_EPOS_PROFILE_POSITION_MODE_HPP
 
+#include <cmath>
 #include <limits>
 
 #include <epos_command_library_cpp/exception.hpp>
@@ -11,8 +12,6 @@
 #include <ros/duration.h>
 #include <ros/time.h>
 
-#include <boost/math/special_functions/fpclassify.hpp> // for isnan()
-
 namespace layered_hardware_epos {
 
 class ProfilePositionMode : public OperationModeBase {
@@ -20,7 +19,7 @@ public:
   ProfilePositionMode(const EposActuatorDataPtr &data)
       : OperationModeBase("profile_position", data) {}
 
-  virtual void starting() {
+  virtual void starting() override {
     try {
       // switch to position mode
       *data_->node.setEnableState();
@@ -41,7 +40,7 @@ public:
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     if (!has_started_) {
       return;
     }
@@ -57,7 +56,7 @@ public:
     }
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     if (!has_started_) {
       return;
     }
@@ -70,7 +69,7 @@ public:
       }
 
       // write position command if updated
-      if (!boost::math::isnan(data_->pos_cmd) && data_->pos_cmd != prev_pos_cmd_) {
+      if (!std::isnan(data_->pos_cmd) && data_->pos_cmd != prev_pos_cmd_) {
         *data_->node.moveToPositionSI(data_->pos_cmd, data_->count_per_revolution,
                                       /* absolute = */ true, /* immediately = */ true);
         prev_pos_cmd_ = data_->pos_cmd;
@@ -81,7 +80,7 @@ public:
     }
   }
 
-  virtual void stopping() {
+  virtual void stopping() override {
     try {
       *data_->node.setDisableState();
     } catch (const eclc::Exception &error) {

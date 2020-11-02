@@ -16,7 +16,7 @@ class DisableMode : public OperationModeBase {
 public:
   DisableMode(const EposActuatorDataPtr &data) : OperationModeBase("disable", data) {}
 
-  virtual void starting() {
+  virtual void starting() override {
     try {
       // switch to disable state
       *data_->node.setDisableState();
@@ -29,7 +29,7 @@ public:
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) {
+  virtual void read(const ros::Time &time, const ros::Duration &period) override {
     if (!has_started_) {
       return;
     }
@@ -43,11 +43,11 @@ public:
     }
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) {
+  virtual void write(const ros::Time &time, const ros::Duration &period) override {
     // nothing to do
   }
 
-  virtual void stopping() {
+  virtual void stopping() override {
     // nothing to do
   }
 

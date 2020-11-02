@@ -1,13 +1,13 @@
 #ifndef LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_DATA_HPP
 #define LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_DATA_HPP
 
+#include <memory>
 #include <string>
 
 #include <epos_command_library_cpp/node.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace layered_hardware_epos {
 
@@ -38,8 +38,8 @@ struct EposActuatorData {
   double pos_cmd, vel_cmd, eff_cmd;
 };
 
-typedef boost::shared_ptr< EposActuatorData > EposActuatorDataPtr;
-typedef boost::shared_ptr< const EposActuatorData > EposActuatorDataConstPtr;
+typedef std::shared_ptr< EposActuatorData > EposActuatorDataPtr;
+typedef std::shared_ptr< const EposActuatorData > EposActuatorDataConstPtr;
 
 } // namespace layered_hardware_epos
 

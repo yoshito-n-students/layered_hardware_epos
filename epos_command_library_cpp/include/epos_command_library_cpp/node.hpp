@@ -2,14 +2,13 @@
 #define EPOS_COMMAND_LIBRARY_CPP_NODE_HPP
 
 #include <cmath> // for M_PI
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include <epos_command_library/Definitions.h>
 #include <epos_command_library_cpp/device.hpp>
 #include <epos_command_library_cpp/result.hpp>
-
-#include <boost/cstdint.hpp>
 
 namespace epos_command_library_cpp {
 
@@ -36,8 +35,8 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< boost::uint64_t > getSerialNumber() const {
-    typedef Result< boost::uint64_t > ResultU64;
+  Result< std::uint64_t > getSerialNumber() const {
+    typedef Result< std::uint64_t > ResultU64;
 
     // get device name
     const Result< std::string > device_name(device_.getDeviceName());
@@ -61,7 +60,7 @@ public:
     }
 
     // get the serial number
-    boost::uint64_t serial_number;
+    std::uint64_t serial_number;
     const Result< unsigned int > n_bytes_read(
         getObject(object_id, object_sub_id, &serial_number, 8));
     if (n_bytes_read.isError()) {

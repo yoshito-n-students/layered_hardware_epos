@@ -179,7 +179,7 @@ void listNodesOnPort(const Path &path, const Configs &configs, const std::size_t
   const std::vector< unsigned int > baudrates(
       *eclc::getBaudrateList(path.device, path.protocol_stack, path.interface, path.port));
   std::cout << indent << "\tBaudrates:" << std::endl;
-  BOOST_FOREACH (const unsigned int baudrate, baudrates) {
+  for (const unsigned int baudrate : baudrates) {
     std::cout << indent << "\t\t" << std::dec << baudrate << std::endl;
   }
 
@@ -209,7 +209,7 @@ void listNodesOnInterface(const Path &path, const Configs &configs, const std::s
   *eclc::resetPortNameSelection(path.device, path.protocol_stack, path.interface);
   const std::vector< std::string > ports(
       *eclc::getPortNameSelection(path.device, path.protocol_stack, path.interface));
-  BOOST_FOREACH (const std::string &port, ports) {
+  for (const std::string &port : ports) {
     listNodesOnPort(Path(path.device, path.protocol_stack, path.interface, port), configs,
                     n_indent + 1);
   }
@@ -222,7 +222,7 @@ void listNodesOnProtocolStack(const Path &path, const Configs &configs,
 
   const std::vector< std::string > interfaces(
       *eclc::getInterfaceNameSelection(path.device, path.protocol_stack));
-  BOOST_FOREACH (const std::string &interface, interfaces) {
+  for (const std::string &interface : interfaces) {
     listNodesOnInterface(Path(path.device, path.protocol_stack, interface), configs, n_indent + 1);
   }
 }
@@ -233,7 +233,7 @@ void listNodesOnDevice(const Path &path, const Configs &configs, const std::size
 
   const std::vector< std::string > protocol_stacks(
       *eclc::getProtocolStackNameSelection(path.device));
-  BOOST_FOREACH (const std::string &protocol_stack, protocol_stacks) {
+  for (const std::string &protocol_stack : protocol_stacks) {
     listNodesOnProtocolStack(Path(path.device, protocol_stack), configs, n_indent + 1);
   }
 }
@@ -241,7 +241,7 @@ void listNodesOnDevice(const Path &path, const Configs &configs, const std::size
 void listAllNodes(const Configs &configs, const std::size_t n_indent = 0) {
   try {
     const std::vector< std::string > devices(*eclc::getDeviceNameSelection());
-    BOOST_FOREACH (const std::string &device, devices) {
+    for (const std::string &device : devices) {
       listNodesOnDevice(Path(device), configs, n_indent);
     }
   } catch (const eclc::Exception &error) {
