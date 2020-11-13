@@ -7,7 +7,6 @@
 #include <epos_command_library_cpp/node.hpp>
 #include <epos_command_library_cpp/selection.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/options_description.hpp>
