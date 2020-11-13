@@ -233,7 +233,7 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setIncHallSensorParameter(const bool inverted_polarity) {
+  Result< void > setHallSensorParameter(const bool inverted_polarity) {
     typedef Result< void > ResultV;
     unsigned int error_code;
     return VCS_SetHallSensorParameter(device_.handle_.get(), id_, inverted_polarity ? 1 : 0,
@@ -461,7 +461,7 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result< void > setQuickStepState() {
+  Result< void > setQuickStopState() {
     typedef Result< void > ResultV;
     unsigned int error_code;
     return VCS_SetQuickStopState(device_.handle_.get(), id_, &error_code) != 0
