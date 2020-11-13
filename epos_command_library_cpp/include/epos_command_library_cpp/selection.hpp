@@ -124,7 +124,7 @@ static inline Result< void > resetPortNameSelection(const std::string &device_na
 static inline Result< std::vector< unsigned int > >
 getBaudrateList(const std::string &device_name, const std::string &protocol_stack_name,
                 const std::string &interface_name, const std::string &port_name) {
-  typedef Result< std::vector< unsigned int > > ResultSV;
+  typedef Result< std::vector< unsigned int > > ResultUIV;
   unsigned int baudrate;
   int end_of_selection; // BOOL
   unsigned int error_code;
@@ -147,7 +147,7 @@ getBaudrateList(const std::string &device_name, const std::string &protocol_stac
     }
   }
 
-  return ResultSV::success(baudrates);
+  return ResultUIV::success(baudrates);
 }
 
 } // namespace epos_command_library_cpp
