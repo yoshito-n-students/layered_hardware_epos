@@ -55,9 +55,9 @@ public:
 
   virtual ~Result() {}
 
-  bool isError() const { return value_ == boost::none; }
+  bool isError() const override { return value_ == boost::none; }
 
-  bool isSuccess() const { return value_ != boost::none; }
+  bool isSuccess() const override { return value_ != boost::none; }
 
   Value &unwrap() {
     if (isError()) {
@@ -110,9 +110,9 @@ public:
 
   virtual ~Result() {}
 
-  bool isError() const { return is_error_; }
+  bool isError() const override { return is_error_; }
 
-  bool isSuccess() const { return !is_error_; }
+  bool isSuccess() const override { return !is_error_; }
 
   void unwrap() const {
     if (isError()) {
