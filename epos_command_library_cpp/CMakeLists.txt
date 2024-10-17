@@ -39,6 +39,8 @@ install(
 
 # TODO: declare tests here
 
+ament_export_dependencies(
+  epos_command_library)
 ament_export_include_directories(
   include)
 
