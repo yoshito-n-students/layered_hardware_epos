@@ -1,243 +1,201 @@
 #ifndef LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_HPP
 #define LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_HPP
 
-#include <list>
-#include <map>
+#include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include <epos_command_library_cpp/device.hpp>
 #include <epos_command_library_cpp/node.hpp>
-#include <hardware_interface/actuator_command_interface.h>
-#include <hardware_interface/actuator_state_interface.h>
-#include <hardware_interface/controller_info.h>
-#include <hardware_interface/robot_hw.h>
+#include <hardware_interface/handle.hpp> // for hi::{State,Command}Interface
+#include <hardware_interface/types/hardware_interface_return_values.hpp> // for hi::return_type
+#include <hardware_interface/types/hardware_interface_type_values.hpp>
+#include <layered_hardware/string_registry.hpp>
 #include <layered_hardware_epos/clear_fault_mode.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/current_mode.hpp>
 #include <layered_hardware_epos/disable_mode.hpp>
-#include <layered_hardware_epos/operation_mode_base.hpp>
+#include <layered_hardware_epos/epos_actuator_context.hpp>
+#include <layered_hardware_epos/logging_utils.hpp>
+#include <layered_hardware_epos/operation_mode_interface.hpp>
 #include <layered_hardware_epos/position_mode.hpp>
 #include <layered_hardware_epos/profile_position_mode.hpp>
 #include <layered_hardware_epos/profile_velocity_mode.hpp>
 #include <layered_hardware_epos/reset_mode.hpp>
 #include <layered_hardware_epos/velocity_mode.hpp>
-#include <ros/console.h>
-#include <ros/duration.h>
-#include <ros/node_handle.h>
-#include <ros/time.h>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
+
+#include <yaml-cpp/yaml.h>
 
 namespace layered_hardware_epos {
 
 class EposActuator {
 public:
-  EposActuator() {}
+  EposActuator(const std::string &name, const YAML::Node &params, const eclc::Device &device) {
+    // parse parameters for this actuator
+    unsigned short id;
+    int count_per_revolution;
+    double torque_constant;
+    std::vector<std::string> mapped_mode_names;
+    try {
+      id = static_cast<unsigned short>(params["id"].as<int>());
+      count_per_revolution = params["count_per_revolution"].as<int>();
+      torque_constant = params["torque_constant"].as<double>();
+      for (const auto &iface_mode_name_pair : params["operation_mode_map"]) {
+        bound_interfaces_.emplace_back(iface_mode_name_pair.first.as<std::string>());
+        mapped_mode_names.emplace_back(iface_mode_name_pair.second.as<std::string>());
+      }
+    } catch (const YAML::Exception &error) {
+      throw std::runtime_error("Failed to parse parameters for \"" + name +
+                               "\" actuator: " + error.what());
+    }
+
+    // allocate context
+    context_.reset(new EposActuatorContext{
+        name, eclc::Node(device, id, count_per_revolution, torque_constant)});
+
+    // make operating mode map from ros-controller name to EPOS's operation mode
+    for (const auto &mode_name : mapped_mode_names) {
+      try {
+        mapped_modes_.emplace_back(make_operation_mode(mode_name));
+      } catch (const std::runtime_error &error) {
+        throw std::runtime_error("Invalid value in \"operation_mode_map\" parameter for \"" + name +
+                                 "\" actuator: " + error.what());
+      }
+    }
+  }
 
   virtual ~EposActuator() {
     // finalize the present mode
-    if (present_mode_) {
-      ROS_INFO_STREAM("EposActuator::~EposActuator(): " << data_->nodeDescription()
-                                                        << ": Stopping operation mode '"
-                                                        << present_mode_->getName() << "'");
-      present_mode_->stopping();
-      present_mode_ = OperationModePtr();
+    switch_operation_modes(/* new_mode = */ nullptr);
+  }
+
+  std::vector<hi::StateInterface> export_state_interfaces() {
+    // export reference to actuator states owned by this actuator
+    std::vector<hi::StateInterface> ifaces;
+    ifaces.emplace_back(context_->name, hi::HW_IF_POSITION, &context_->pos);
+    ifaces.emplace_back(context_->name, hi::HW_IF_VELOCITY, &context_->vel);
+    ifaces.emplace_back(context_->name, hi::HW_IF_EFFORT, &context_->eff);
+    return ifaces;
+  }
+
+  std::vector<hi::CommandInterface> export_command_interfaces() {
+    // export reference to actuator commands owned by this actuator
+    std::vector<hi::CommandInterface> ifaces;
+    ifaces.emplace_back(context_->name, hi::HW_IF_POSITION, &context_->pos_cmd);
+    ifaces.emplace_back(context_->name, hi::HW_IF_VELOCITY, &context_->vel_cmd);
+    ifaces.emplace_back(context_->name, hi::HW_IF_EFFORT, &context_->eff_cmd);
+    return ifaces;
+  }
+
+  hi::return_type prepare_command_mode_switch(const lh::StringRegistry &active_interfaces) {
+    // check how many interfaces associated with actuator command mode are active
+    const std::vector<std::size_t> active_bound_ifaces = active_interfaces.find(bound_interfaces_);
+    if (active_bound_ifaces.size() <= 1) {
+      return hi::return_type::OK;
+    } else { // active_bound_ifaces.size() >= 2
+      LHE_ERROR("EposActuator::prepare_command_mode_switch(): "
+                "Reject mode switching of \"%s\" actuator "
+                "because %zd bound interfaces are about to be active",
+                context_->name.c_str(), active_bound_ifaces.size());
+      return hi::return_type::ERROR;
     }
   }
 
-  bool init(const std::string &name, const eclc::Device &device, hi::RobotHW *const hw,
-            const ros::NodeHandle &param_nh) {
-    // epos node id from param
-    int id;
-    if (!param_nh.getParam("id", id)) {
-      ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '" << param_nh.resolveName("id")
-                                                                     << "'");
-      return false;
+  hi::return_type perform_command_mode_switch(const lh::StringRegistry &active_interfaces) {
+    // check how many interfaces associated with actuator command mode are active
+    const std::vector<std::size_t> active_bound_ifaces = active_interfaces.find(bound_interfaces_);
+    if (active_bound_ifaces.size() >= 2) {
+      LHE_ERROR("EposActuator::perform_command_mode_switch(): "
+                "Could not switch mode of \"%s\" actuator "
+                "because %zd bound interfaces are active",
+                context_->name.c_str(), bound_interfaces_.size());
+      return hi::return_type::ERROR;
     }
 
-    // encoder count per resolution from param
-    int count_per_revolution;
-    if (!param_nh.getParam("count_per_revolution", count_per_revolution)) {
-      ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("count_per_revolution") << "'");
-      return false;
+    // switch to actuator command mode associated with active bound interface
+    if (!active_bound_ifaces.empty()) { // active_bound_ifaces.size() == 1
+      switch_operation_modes(mapped_modes_[active_bound_ifaces.front()]);
+    } else { // active_bound_ifaces.size() == 0
+      switch_operation_modes(nullptr);
     }
-
-    // torque constant from param
-    double torque_constant;
-    if (!param_nh.getParam("torque_constant", torque_constant)) {
-      ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("torque_constant") << "'");
-      return false;
-    }
-
-    // allocate data structure
-    data_.reset(
-        new EposActuatorData(name, eclc::Node(device, id), count_per_revolution, torque_constant));
-
-    // register actuator states & commands to corresponding hardware interfaces
-    const hi::ActuatorStateHandle state_handle(data_->name, &data_->pos, &data_->vel, &data_->eff);
-    if (!registerActuatorTo< hi::ActuatorStateInterface >(hw, state_handle) ||
-        !registerActuatorTo< hi::PositionActuatorInterface >(
-            hw, hi::ActuatorHandle(state_handle, &data_->pos_cmd)) ||
-        !registerActuatorTo< hi::VelocityActuatorInterface >(
-            hw, hi::ActuatorHandle(state_handle, &data_->vel_cmd)) ||
-        !registerActuatorTo< hi::EffortActuatorInterface >(
-            hw, hi::ActuatorHandle(state_handle, &data_->eff_cmd))) {
-      return false;
-    }
-
-    // make operation mode map from ros-controller name to EPOS's operation mode
-    std::map< std::string, std::string > mode_name_map;
-    if (!param_nh.getParam("operation_mode_map", mode_name_map)) {
-      ROS_ERROR_STREAM("EposActuator::init(): Failed to get param '"
-                       << param_nh.resolveName("operation_mode_map") << "'");
-      return false;
-    }
-    for (const std::map< std::string, std::string >::value_type &mode_name : mode_name_map) {
-      const OperationModePtr mode(makeOperationMode(mode_name.second));
-      if (!mode) {
-        ROS_ERROR_STREAM("EposActuator::init(): " << data_->nodeDescription()
-                                                  << ": Failed to make operation mode '"
-                                                  << mode_name.second << "')");
-        return false;
-      }
-      mode_map_[mode_name.first] = mode;
-    }
-
-    return true;
+    return hi::return_type::OK;
   }
 
-  bool prepareSwitch(const std::list< hi::ControllerInfo > &starting_controller_list,
-                     const std::list< hi::ControllerInfo > &stopping_controller_list) {
-    // check if switching is possible by counting number of operation modes after switching
-
-    // number of modes before switching
-    std::size_t n_modes(present_mode_ ? 1 : 0);
-
-    // number of modes after stopping controllers
-    if (n_modes != 0) {
-      for (const hi::ControllerInfo &stopping_controller : stopping_controller_list) {
-        const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
-            mode_map_.find(stopping_controller.name));
-        if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
-          n_modes = 0;
-          break;
-        }
-      }
-    }
-
-    // number of modes after starting controllers
-    for (const hi::ControllerInfo &starting_controller : starting_controller_list) {
-      const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
-          mode_map_.find(starting_controller.name));
-      if (mode_to_start != mode_map_.end() && mode_to_start->second) {
-        ++n_modes;
-      }
-    }
-
-    // assert 0 or 1 operation modes. multiple modes are impossible.
-    if (n_modes != 0 && n_modes != 1) {
-      ROS_ERROR_STREAM("EposActuator::prepareSwitch(): "
-                       << data_->nodeDescription() << ": Rejected unfeasible controller switching");
-      return false;
-    }
-
-    return true;
-  }
-
-  void doSwitch(const std::list< hi::ControllerInfo > &starting_controller_list,
-                const std::list< hi::ControllerInfo > &stopping_controller_list) {
-    // stop actuator's operation mode according to stopping controller list
-    if (present_mode_) {
-      for (const hi::ControllerInfo &stopping_controller : stopping_controller_list) {
-        const std::map< std::string, OperationModePtr >::const_iterator mode_to_stop(
-            mode_map_.find(stopping_controller.name));
-        if (mode_to_stop != mode_map_.end() && mode_to_stop->second == present_mode_) {
-          ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
-                                                       << ": Stopping operation mode '"
-                                                       << present_mode_->getName() << "'");
-          present_mode_->stopping();
-          present_mode_ = OperationModePtr();
-          break;
-        }
-      }
-    }
-
-    // start actuator's operation modes according to starting controllers
-    if (!present_mode_) {
-      for (const hi::ControllerInfo &starting_controller : starting_controller_list) {
-        const std::map< std::string, OperationModePtr >::const_iterator mode_to_start(
-            mode_map_.find(starting_controller.name));
-        if (mode_to_start != mode_map_.end() && mode_to_start->second) {
-          ROS_INFO_STREAM("EposActuator::doSwitch(): " << data_->nodeDescription()
-                                                       << ": Starting operation mode '"
-                                                       << mode_to_start->second->getName() << "'");
-          present_mode_ = mode_to_start->second;
-          present_mode_->starting();
-          break;
-        }
-      }
-    }
-  }
-
-  void read(const ros::Time &time, const ros::Duration &period) {
+  hi::return_type read(const rclcpp::Time &time, const rclcpp::Duration &period) {
     if (present_mode_) {
       present_mode_->read(time, period);
     }
+    return hi::return_type::OK; // TODO: return result of read
   }
 
-  void write(const ros::Time &time, const ros::Duration &period) {
+  hi::return_type write(const rclcpp::Time &time, const rclcpp::Duration &period) {
     if (present_mode_) {
       present_mode_->write(time, period);
     }
+    return hi::return_type::OK; // TODO: return result of write
   }
 
 private:
-  template < typename Interface, typename Handle >
-  static bool registerActuatorTo(hi::RobotHW *const hw, const Handle &handle) {
-    Interface *const iface(hw->get< Interface >());
-    if (!iface) {
-      ROS_ERROR("EposActuator::registerActuatorTo(): Failed to get a hardware interface");
-      return false;
-    }
-    iface->registerHandle(handle);
-    return true;
-  }
-
-  OperationModePtr makeOperationMode(const std::string &mode_str) {
+  std::shared_ptr<OperationModeInterface> make_operation_mode(const std::string &mode_str) const {
     if (mode_str == "clear_fault") {
-      return std::make_shared< ClearFaultMode >(data_);
+      return std::make_shared<ClearFaultMode>(context_);
     } else if (mode_str == "current") {
-      return std::make_shared< CurrentMode >(data_);
+      return std::make_shared<CurrentMode>(context_);
     } else if (mode_str == "disable") {
-      return std::make_shared< DisableMode >(data_);
+      return std::make_shared<DisableMode>(context_);
     } else if (mode_str == "position") {
-      return std::make_shared< PositionMode >(data_);
+      return std::make_shared<PositionMode>(context_);
     } else if (mode_str == "profile_position") {
-      return std::make_shared< ProfilePositionMode >(data_);
+      return std::make_shared<ProfilePositionMode>(context_);
     } else if (mode_str == "profile_velocity") {
-      return std::make_shared< ProfileVelocityMode >(data_);
+      return std::make_shared<ProfileVelocityMode>(context_);
     } else if (mode_str == "reset") {
-      return std::make_shared< ResetMode >(data_);
+      return std::make_shared<ResetMode>(context_);
     } else if (mode_str == "velocity") {
-      return std::make_shared< VelocityMode >(data_);
+      return std::make_shared<VelocityMode>(context_);
     } else {
-      ROS_ERROR_STREAM("EposActuator::makeOperationMode(): " << data_->nodeDescription()
-                                                             << ": Unknown operation mode name '"
-                                                             << mode_str << "'");
-      return OperationModePtr();
+      throw std::runtime_error("Unknown operation mode name \"" + mode_str + "\"");
+    }
+  }
+
+  void switch_operation_modes(const std::shared_ptr<OperationModeInterface> &new_mode) {
+    // do nothing if no mode switch is requested
+    if (present_mode_ == new_mode) {
+      return;
+    }
+    // stop present mode
+    if (present_mode_) {
+      LHE_INFO("EposActuator::switch_operation_modes(): "
+               "Stopping \"%s\" operation mode for \"%s\" actuator",
+               present_mode_->get_name().c_str(), context_->name.c_str());
+      present_mode_->stopping();
+      present_mode_.reset();
+    }
+    // start new mode
+    if (new_mode) {
+      LHE_INFO("EposActuator::switch_operation_modes(): "
+               "Starting \"%s\" operation mode for \"%s\" actuator",
+               new_mode->get_name().c_str(), context_->name.c_str());
+      new_mode->starting();
+      present_mode_ = new_mode;
     }
   }
 
 private:
-  EposActuatorDataPtr data_;
+  std::shared_ptr<EposActuatorContext> context_;
 
-  std::map< std::string, OperationModePtr > mode_map_;
-  OperationModePtr present_mode_;
+  // present operating mode
+  std::shared_ptr<OperationModeInterface> present_mode_;
+  // map from command interface to operating mode
+  // (i.e. mapped_modes_[i] is associated with bound_interfaces_[i])
+  std::vector<std::string> bound_interfaces_;
+  std::vector<std::shared_ptr<OperationModeInterface>> mapped_modes_;
 };
 
-typedef std::shared_ptr< EposActuator > EposActuatorPtr;
-typedef std::shared_ptr< const EposActuator > EposActuatorConstPtr;
 } // namespace layered_hardware_epos
 
 #endif

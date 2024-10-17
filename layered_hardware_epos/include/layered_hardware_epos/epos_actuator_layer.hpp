@@ -1,141 +1,179 @@
 #ifndef LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_LAYER_HPP
 #define LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_LAYER_HPP
 
-#include <list>
+#include <memory>
 #include <string>
+#include <utility> // for std::move()
 #include <vector>
 
+#include <controller_interface/controller_interface_base.hpp> // for ci::InterfaceConfiguration
 #include <epos_command_library_cpp/device.hpp>
-#include <hardware_interface/actuator_command_interface.h>
-#include <hardware_interface/actuator_state_interface.h>
-#include <hardware_interface/controller_info.h>
-#include <hardware_interface/robot_hw.h>
-#include <layered_hardware/layer_base.hpp>
+#include <hardware_interface/handle.hpp> // for hi::{State,Command}Interface
+#include <hardware_interface/hardware_info.hpp>
+#include <hardware_interface/types/hardware_interface_return_values.hpp> // for hi::return_type
+#include <layered_hardware/layer_interface.hpp>
+#include <layered_hardware/merge_utils.hpp>
+#include <layered_hardware/string_registry.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
 #include <layered_hardware_epos/epos_actuator.hpp>
-#include <ros/console.h>
-#include <ros/duration.h>
-#include <ros/names.h>
-#include <ros/node_handle.h>
-#include <ros/param.h>
-#include <ros/time.h>
-#include <xmlrpcpp/XmlRpcValue.h>
+#include <layered_hardware_epos/logging_utils.hpp>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
+
+#include <yaml-cpp/yaml.h>
 
 namespace layered_hardware_epos {
 
-class EposActuatorLayer : public lh::LayerBase {
+class EposActuatorLayer : public lh::LayerInterface {
 public:
-  virtual bool init(hi::RobotHW *const hw, const ros::NodeHandle &param_nh,
-                    const std::string &urdf_str) override {
-    namespace rp = ros::param;
+  virtual CallbackReturn on_init(const std::string &layer_name,
+                                 const hi::HardwareInfo &hardware_info) override {
+    // initialize the base class first
+    const CallbackReturn is_base_initialized =
+        lh::LayerInterface::on_init(layer_name, hardware_info);
+    if (is_base_initialized != CallbackReturn::SUCCESS) {
+      return is_base_initialized;
+    }
 
-    // make actuator interfaces registered to the hardware
-    // so that other layers can find the interfaces
-    makeRegistered< hi::ActuatorStateInterface >(hw);
-    makeRegistered< hi::PositionActuatorInterface >(hw);
-    makeRegistered< hi::VelocityActuatorInterface >(hw);
-    makeRegistered< hi::EffortActuatorInterface >(hw);
+    // find parameter group for this layer
+    const auto params_it = hardware_info.hardware_parameters.find(layer_name);
+    if (params_it == hardware_info.hardware_parameters.end()) {
+      LHE_ERROR("EposActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name.c_str());
+      return CallbackReturn::ERROR;
+    }
 
-    // open epos device
-    eclc::Result< eclc::Device > device(eclc::Device::open(
-        // equivarent of param_nh.param< std::string >("device", "EPOS4") .
-        // but we cannot call this becase NodeHandle::param() is not a const function (why???)
-        rp::param< std::string >(param_nh.resolveName("device"), "EPOS4"),
-        rp::param< std::string >(param_nh.resolveName("protocol_stack"), "MAXON SERIAL V2"),
-        rp::param< std::string >(param_nh.resolveName("interface"), "USB"),
-        rp::param< std::string >(param_nh.resolveName("port"), "USB0")));
-    if (device.isError()) {
-      ROS_ERROR_STREAM(
-          "EposActuatorLayer::init(): Failed to open an EPOS device: " << device.errorInfo());
-      return false;
+    // parse parameters for this layer as yaml
+    std::string device_name, protocol_stack_name, interface_name, port_name;
+    unsigned int baudrate;
+    double timeout;
+    std::vector<std::string> ator_names;
+    std::vector<YAML::Node> ator_params;
+    try {
+      const YAML::Node params = YAML::Load(params_it->second);
+      device_name = params["device"].as<std::string>("EPOS4");
+      protocol_stack_name = params["protocol_stack"].as<std::string>("MAXON SERIAL V2");
+      interface_name = params["interface"].as<std::string>("USB");
+      port_name = params["port"].as<std::string>("USB0");
+      baudrate = static_cast<unsigned int>(params["baudrate"].as<int>(1000000));
+      timeout = params["timeout"].as<double>(0.5);
+      for (const auto &name_param_pair : params["actuators"]) {
+        ator_names.emplace_back(name_param_pair.first.as<std::string>());
+        ator_params.emplace_back(name_param_pair.second);
+      }
+    } catch (const YAML::Exception &error) {
+      LHE_ERROR("EposActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
+                error.what(), layer_name.c_str());
+      return CallbackReturn::ERROR;
+    }
+
+    // open EPOS device
+    auto device = eclc::Device::open(device_name, protocol_stack_name, interface_name, port_name);
+    if (device.is_error()) {
+      LHE_ERROR("EposActuatorLayer::on_init(): Failed to open an EPOS device: %s",
+                device.error_info().c_str());
+      return CallbackReturn::ERROR;
     }
 
     // configure the epos device
-    const eclc::Result< void > result_setting(
-        device->setProtocolStackSettingsSI(rp::param(param_nh.resolveName("baudrate"), 1000000),
-                                           rp::param(param_nh.resolveName("timeout"), 0.5)));
-    if (result_setting.isError()) {
-      ROS_ERROR_STREAM(
-          "EposActuatorLayer::init(): Failed to set protocol stack settings of an EPOS device: "
-          << result_setting.errorInfo());
-      return false;
-    }
-
-    // load actuator names from param "actuators"
-    XmlRpc::XmlRpcValue ators_param;
-    if (!param_nh.getParam("actuators", ators_param)) {
-      ROS_ERROR_STREAM("EposActuatorLayer::init(): Failed to get param '"
-                       << param_nh.resolveName("actuators") << "'");
-      return false;
-    }
-    if (ators_param.getType() != XmlRpc::XmlRpcValue::TypeStruct) {
-      ROS_ERROR_STREAM("EposActuatorLayer::init(): Param '" << param_nh.resolveName("actuators")
-                                                            << "' must be a struct");
-      return false;
+    const auto result_setting = device->set_protocol_stack_settings(baudrate, timeout);
+    if (result_setting.is_error()) {
+      LHE_ERROR("EposActuatorLayer::on_init(): Failed to set protocol stack settings of an EPOS "
+                "device: %s",
+                result_setting.error_info().c_str());
+      return CallbackReturn::ERROR;
     }
 
     // init actuators with param "actuators/<actuator_name>"
-    for (const XmlRpc::XmlRpcValue::ValueStruct::value_type &ator_param : ators_param) {
-      const EposActuatorPtr ator(new EposActuator());
-      const std::string &ator_name(ator_param.first);
-      ros::NodeHandle ator_param_nh(param_nh, ros::names::append("actuators", ator_name));
-      if (!ator->init(ator_name, *device, hw, ator_param_nh)) {
-        ROS_ERROR_STREAM("EposActuatorLayer::init(): Failed to init the actuator '" << ator_name);
-        return false;
+    for (std::size_t i = 0; i < ator_names.size(); ++i) {
+      try {
+        actuators_.emplace_back(new EposActuator(ator_names[i], ator_params[i], *device));
+      } catch (const std::runtime_error &error) {
+        LHE_ERROR("EposActuatorLayer::on_init(): Failed to create driver for \"%s\" actuator",
+                  ator_names[i].c_str());
+        return CallbackReturn::ERROR;
       }
-      ROS_INFO_STREAM("EposActuatorLayer::init(): Initialized the actuator '" << ator_name << "'");
-      actuators_.push_back(ator);
+      LHE_INFO("EposActuatorLayer::on_init(): Initialized the actuator \"%s\"",
+               ator_names[i].c_str());
     }
 
-    return true;
+    return CallbackReturn::SUCCESS;
   }
 
-  virtual bool prepareSwitch(const std::list< hi::ControllerInfo > &start_list,
-                             const std::list< hi::ControllerInfo > &stop_list) override {
-    // ask to all actuators if controller switching is possible
-    for (const EposActuatorPtr &ator : actuators_) {
-      if (!ator->prepareSwitch(start_list, stop_list)) {
-        return false;
-      }
+  virtual std::vector<hi::StateInterface> export_state_interfaces() override {
+    // export reference to actuator states owned by this layer
+    std::vector<hi::StateInterface> ifaces;
+    for (const auto &ator : actuators_) {
+      ifaces = lh::merge(std::move(ifaces), ator->export_state_interfaces());
     }
-    return true;
+    return ifaces;
   }
 
-  virtual void doSwitch(const std::list< hi::ControllerInfo > &start_list,
-                        const std::list< hi::ControllerInfo > &stop_list) override {
+  virtual std::vector<hi::CommandInterface> export_command_interfaces() override {
+    // export reference to actuator commands owned by this layer
+    std::vector<hi::CommandInterface> ifaces;
+    for (const auto &ator : actuators_) {
+      ifaces = lh::merge(std::move(ifaces), ator->export_command_interfaces());
+    }
+    return ifaces;
+  }
+
+  virtual ci::InterfaceConfiguration state_interface_configuration() const override {
+    // any state interfaces required from other layers because this layer is "source"
+    return {ci::interface_configuration_type::NONE, {}};
+  }
+
+  virtual ci::InterfaceConfiguration command_interface_configuration() const override {
+    // any command interfaces required from other layers because this layer is "source"
+    return {ci::interface_configuration_type::NONE, {}};
+  }
+
+  virtual void
+  assign_interfaces(std::vector<hi::LoanedStateInterface> && /*state_interfaces*/,
+                    std::vector<hi::LoanedCommandInterface> && /*command_interfaces*/) override {
+    // any interfaces has to be imported from other layers because this layer is "source"
+  }
+
+  virtual hi::return_type
+  prepare_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->prepare_command_mode_switch(active_interfaces));
+    }
+    return result;
+  }
+
+  virtual hi::return_type
+  perform_command_mode_switch(const lh::StringRegistry &active_interfaces) override {
     // notify controller switching to all actuators
-    for (const EposActuatorPtr &ator : actuators_) {
-      ator->doSwitch(start_list, stop_list);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->perform_command_mode_switch(active_interfaces));
     }
+    return result;
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) override {
+  virtual hi::return_type read(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // read from all actuators
-    for (const EposActuatorPtr &ator : actuators_) {
-      ator->read(time, period);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->read(time, period));
     }
+    return result;
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) override {
+  virtual hi::return_type write(const rclcpp::Time &time, const rclcpp::Duration &period) override {
     // write to all actuators
-    for (const EposActuatorPtr &ator : actuators_) {
-      ator->write(time, period);
+    hi::return_type result = hi::return_type::OK;
+    for (const auto &ator : actuators_) {
+      result = lh::merge(result, ator->write(time, period));
     }
+    return result;
   }
 
 private:
-  // make an hardware interface registered. the interface must be in the static memory space
-  // to allow access from outside of this plugin.
-  template < typename Interface > static void makeRegistered(hi::RobotHW *const hw) {
-    if (!hw->get< Interface >()) {
-      static Interface iface;
-      hw->registerInterface(&iface);
-    }
-  }
-
-private:
-  std::vector< EposActuatorPtr > actuators_;
+  std::vector<std::unique_ptr<EposActuator>> actuators_;
 };
+
 } // namespace layered_hardware_epos
 
 #endif

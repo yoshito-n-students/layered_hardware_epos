@@ -3,75 +3,76 @@
 
 #include <cmath>
 #include <limits>
+#include <memory>
 
 #include <epos_command_library_cpp/exception.hpp>
 #include <layered_hardware_epos/common_namespaces.hpp>
-#include <layered_hardware_epos/epos_actuator_data.hpp>
-#include <layered_hardware_epos/operation_mode_base.hpp>
-#include <ros/console.h>
-#include <ros/duration.h>
-#include <ros/time.h>
+#include <layered_hardware_epos/epos_actuator_context.hpp>
+#include <layered_hardware_epos/logging_utils.hpp>
+#include <layered_hardware_epos/operation_mode_interface.hpp>
+#include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 
 namespace layered_hardware_epos {
 
-class CurrentMode : public OperationModeBase {
+class CurrentMode : public OperationModeInterface {
 public:
-  CurrentMode(const EposActuatorDataPtr &data) : OperationModeBase("current", data) {}
+  CurrentMode(const std::shared_ptr<EposActuatorContext> &context)
+      : OperationModeInterface("current", context) {}
 
   virtual void starting() override {
     try {
       // switch to current mode
-      *data_->node.setEnableState();
-      *data_->node.activateCurrentMode();
+      *context_->node.set_enable_state();
+      *context_->node.activate_current_mode();
 
       // set reasonable initial command
-      data_->eff_cmd = 0.;
-      prev_eff_cmd_ = std::numeric_limits< double >::quiet_NaN();
+      context_->eff_cmd = 0.;
+      prev_eff_cmd_ = std::numeric_limits<double>::quiet_NaN();
 
       has_started_ = true;
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("CurrentMode::starting(): " << data_->nodeDescription() << ": "
-                                                   << error.what());
+      LHE_ERROR("CurrentMode::starting(): %s: %s", //
+                get_display_name(*context_).c_str(), error.what());
       has_started_ = false;
     }
   }
 
-  virtual void read(const ros::Time &time, const ros::Duration &period) override {
+  virtual void read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
     if (!has_started_) {
       return;
     }
 
     try {
-      data_->pos = *data_->node.getPositionSI(data_->count_per_revolution);
-      data_->vel = *data_->node.getVelocitySI();
-      data_->eff = *data_->node.getTorqueSI(data_->torque_constant);
+      context_->pos = *context_->node.get_position();
+      context_->vel = *context_->node.get_velocity();
+      context_->eff = *context_->node.get_torque();
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("CurrentMode::read(): " << data_->nodeDescription() << ": " << error.what());
+      LHE_ERROR("CurrentMode::read(): %s: %s", get_display_name(*context_).c_str(), error.what());
     }
   }
 
-  virtual void write(const ros::Time &time, const ros::Duration &period) override {
+  virtual void write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override {
     if (!has_started_) {
       return;
     }
 
     try {
-      if (!std::isnan(data_->eff_cmd) && data_->eff_cmd != prev_eff_cmd_) {
-        *data_->node.setTorqueMustSI(data_->eff_cmd, data_->torque_constant);
-        prev_eff_cmd_ = data_->eff_cmd;
+      if (!std::isnan(context_->eff_cmd) && context_->eff_cmd != prev_eff_cmd_) {
+        *context_->node.set_torque_must(context_->eff_cmd);
+        prev_eff_cmd_ = context_->eff_cmd;
       }
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("CurrentMode::write(): " << data_->nodeDescription() << ": "
-                                                << error.what());
+      LHE_ERROR("CurrentMode::write(): %s: %s", get_display_name(*context_).c_str(), error.what());
     }
   }
 
   virtual void stopping() override {
     try {
-      *data_->node.setDisableState();
+      *context_->node.set_disable_state();
     } catch (const eclc::Exception &error) {
-      ROS_ERROR_STREAM("CurrentMode::stopping(): " << data_->nodeDescription() << ": "
-                                                   << error.what());
+      LHE_ERROR("CurrentMode::stopping(): %s: %s", //
+                get_display_name(*context_).c_str(), error.what());
     }
   }
 

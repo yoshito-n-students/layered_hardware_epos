@@ -3,12 +3,15 @@
 
 namespace epos_command_library_cpp {}
 
+namespace controller_interface {}
+
 namespace hardware_interface {}
 
 namespace layered_hardware {}
 
 namespace layered_hardware_epos {
 namespace eclc = epos_command_library_cpp;
+namespace ci = controller_interface;
 namespace hi = hardware_interface;
 namespace lh = layered_hardware;
 } // namespace layered_hardware_epos
