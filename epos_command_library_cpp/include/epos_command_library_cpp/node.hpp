@@ -15,7 +15,10 @@ namespace epos_command_library_cpp {
 
 class Node {
 public:
-  Node(const Device &device, const unsigned short id) : device_(device), id_(id) {}
+  Node(const Device &device, const unsigned short id, const int count_per_revolution,
+       const double torque_constant)
+      : device_(device), id_(id), count_per_revolution_(count_per_revolution),
+        torque_constant_(torque_constant) {}
 
   virtual ~Node() {}
 
@@ -263,12 +266,12 @@ public:
   // handle other unit settings.
 
   // get position in rad
-  Result<double> get_position(const int count_per_revolution) const {
+  Result<double> get_position() const {
     using ResultD = Result<double>;
     int position_count;
     unsigned int error_code;
     return (VCS_GetPositionIs(device_.handle_.get(), id_, &position_count, &error_code) != 0)
-               ? ResultD::success(count_to_rad(position_count, count_per_revolution))
+               ? ResultD::success(count_to_rad(position_count))
                : ResultD::error(error_code);
   }
 
@@ -282,16 +285,6 @@ public:
                : ResultD::error(error_code);
   }
 
-  // get current in mA
-  Result<short> get_current_is() const {
-    using ResultS = Result<short>;
-    short current_ma;
-    unsigned int error_code;
-    return (VCS_GetCurrentIs(device_.handle_.get(), id_, &current_ma, &error_code) != 0)
-               ? ResultS::success(current_ma)
-               : ResultS::error(error_code);
-  }
-
   // get current in A
   Result<double> get_current() const {
     using ResultD = Result<double>;
@@ -302,10 +295,10 @@ public:
                : ResultD::error(error_code);
   }
 
-  Result<double> get_torque(const double torque_constant) const {
+  Result<double> get_torque() const {
     using ResultD = Result<double>;
     const auto current_a = get_current();
-    return current_a.is_success() ? ResultD::success(a_to_nm(*current_a, torque_constant))
+    return current_a.is_success() ? ResultD::success(a_to_nm(*current_a))
                                   : ResultD::error(current_a.error_code());
   }
 
@@ -320,12 +313,11 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result<void> move_to_position(const double target_position_rad, const int count_per_revolution,
-                                const bool absolute, const bool immediately) {
+  Result<void> move_to_position(const double target_position_rad, const bool absolute,
+                                const bool immediately) {
     using ResultV = Result<void>;
     unsigned int error_code;
-    return (VCS_MoveToPosition(device_.handle_.get(), id_,
-                               rad_to_count(target_position_rad, count_per_revolution),
+    return (VCS_MoveToPosition(device_.handle_.get(), id_, rad_to_count(target_position_rad),
                                absolute ? 1 : 0, immediately ? 1 : 0, &error_code) != 0)
                ? ResultV::success()
                : ResultV::error(error_code);
@@ -374,11 +366,10 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result<void> set_position_must(const double position_must_rad, const int count_per_revolution) {
+  Result<void> set_position_must(const double position_must_rad) {
     using ResultV = Result<void>;
     unsigned int error_code;
-    return (VCS_SetPositionMust(device_.handle_.get(), id_,
-                                rad_to_count(position_must_rad, count_per_revolution),
+    return (VCS_SetPositionMust(device_.handle_.get(), id_, rad_to_count(position_must_rad),
                                 &error_code) != 0)
                ? ResultV::success()
                : ResultV::error(error_code);
@@ -470,40 +461,37 @@ public:
                : ResultV::error(error_code);
   }
 
-  Result<void> set_torque_must(const double torque_must, const double torque_constant) {
-    return set_current_must(nm_to_a(torque_must, torque_constant));
+  Result<void> set_torque_must(const double torque_must) {
+    return set_current_must(nm_to_a(torque_must));
   }
 
+private:
   // ================
   // unit conversion
 
-  static double count_to_rad(const long count, const int count_per_revolution) {
-    return 2. * M_PI * count / count_per_revolution;
+  double count_to_rad(const long count) const { return 2. * M_PI * count / count_per_revolution_; }
+
+  long rad_to_count(const double rad) const {
+    return static_cast<long>(rad / (2. * M_PI) * count_per_revolution_);
   }
 
-  static long rad_to_count(const double rad, const int count_per_revolution) {
-    return static_cast<long>(rad / (2. * M_PI) * count_per_revolution);
-  }
+  double rpm_to_radps(const long rpm) const { return rpm * M_PI / 30.; }
 
-  static double rpm_to_radps(const long rpm) { return rpm * M_PI / 30.; }
+  long radps_to_rpm(const double radps) const { return static_cast<long>(radps / M_PI * 30.); }
 
-  static long radps_to_rpm(const double radps) { return static_cast<long>(radps / M_PI * 30.); }
+  double ma_to_a(const short ma) const { return ma / 1000.; }
 
-  static double ma_to_a(const short ma) { return ma / 1000.; }
+  short a_to_ma(const double a) const { return static_cast<short>(a * 1000.); }
 
-  static short a_to_ma(const double a) { return static_cast<short>(a * 1000.); }
+  double a_to_nm(const double a) const { return a * torque_constant_; }
 
-  static double a_to_nm(const double a, const double torque_constant) {
-    return a * torque_constant;
-  }
-
-  static double nm_to_a(const double nm, const double torque_constant) {
-    return nm / torque_constant;
-  }
+  double nm_to_a(const double nm) const { return nm / torque_constant_; }
 
 private:
   Device device_;
   const unsigned short id_;
+  const int count_per_revolution_;
+  const double torque_constant_;
 };
 } // namespace epos_command_library_cpp
 #endif

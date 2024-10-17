@@ -69,7 +69,12 @@ void list_node(const eclc::Device &device, const Path &path, const Configs & /*c
                const std::size_t n_indent) {
   try {
     const std::string indent(n_indent, '\t');
-    const eclc::Node node(device, path.node_id);
+    const eclc::Node node(
+        device, path.node_id,
+        // arbitrary value as this function doesn't convert encoder counts to angles
+        /* count_per_revolution = */ 1024,
+        // arbitrary value as this function doesn't convert current to torque
+        /* torque_constant = */ 1.);
 
     // serial number
     const auto serial_number = *node.get_serial_number();
