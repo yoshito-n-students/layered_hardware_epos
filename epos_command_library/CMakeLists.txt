@@ -4,7 +4,7 @@ project(epos_command_library)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-# locate shared library files
+# locate library files in this package
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   set(ftd2xx_LIBRARY ${PROJECT_SOURCE_DIR}/lib/intel/x86_64/libftd2xx.so.1.4.8)
   set(EposCmd_LIBRARY ${PROJECT_SOURCE_DIR}/lib/intel/x86_64/libEposCmd.so.6.8.1.0)
@@ -46,7 +46,7 @@ install(
   IMPORTED_RUNTIME_ARTIFACTS ftd2xx EposCmd
   DESTINATION lib)
 
-# Export headers & libraries
+# export headers & libraries to packages which depend on this package
 ament_export_include_directories(include)
 ament_export_libraries(ftd2xx EposCmd)
 
