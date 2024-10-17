@@ -9,12 +9,12 @@
 
 namespace epos_command_library_cpp {
 
-static inline Result< std::vector< std::string > > getDeviceNameSelection() {
-  typedef Result< std::vector< std::string > > ResultSV;
+static inline Result<std::vector<std::string>> get_device_name_selection() {
+  typedef Result<std::vector<std::string>> ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
   unsigned int error_code;
-  std::vector< std::string > device_names;
+  std::vector<std::string> device_names;
 
   if (VCS_GetDeviceNameSelection(/* start_of_selection = */ 1, buffer, 256, &end_of_selection,
                                  &error_code) != 0) {
@@ -30,20 +30,20 @@ static inline Result< std::vector< std::string > > getDeviceNameSelection() {
   return ResultSV::success(device_names);
 }
 
-static inline Result< std::vector< std::string > >
-getProtocolStackNameSelection(const std::string &device_name) {
-  typedef Result< std::vector< std::string > > ResultSV;
+static inline Result<std::vector<std::string>>
+get_protocol_stack_name_selection(const std::string &device_name) {
+  typedef Result<std::vector<std::string>> ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
   unsigned int error_code;
-  std::vector< std::string > protocol_stack_names;
+  std::vector<std::string> protocol_stack_names;
 
-  if (VCS_GetProtocolStackNameSelection(const_cast< char * >(device_name.c_str()),
+  if (VCS_GetProtocolStackNameSelection(const_cast<char *>(device_name.c_str()),
                                         /* start_of_selection = */ 1, buffer, 256,
                                         &end_of_selection, &error_code) != 0) {
     protocol_stack_names.push_back(buffer);
     while (end_of_selection == 0) {
-      if (VCS_GetProtocolStackNameSelection(const_cast< char * >(device_name.c_str()),
+      if (VCS_GetProtocolStackNameSelection(const_cast<char *>(device_name.c_str()),
                                             /* start_of_selection = */ 0, buffer, 256,
                                             &end_of_selection, &error_code) != 0) {
         protocol_stack_names.push_back(buffer);
@@ -54,22 +54,22 @@ getProtocolStackNameSelection(const std::string &device_name) {
   return ResultSV::success(protocol_stack_names);
 }
 
-static inline Result< std::vector< std::string > >
-getInterfaceNameSelection(const std::string &device_name, const std::string &protocol_stack_name) {
-  typedef Result< std::vector< std::string > > ResultSV;
+static inline Result<std::vector<std::string>>
+get_interface_name_selection(const std::string &device_name,
+                             const std::string &protocol_stack_name) {
+  typedef Result<std::vector<std::string>> ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
   unsigned int error_code;
-  std::vector< std::string > interface_names;
+  std::vector<std::string> interface_names;
 
-  if (VCS_GetInterfaceNameSelection(const_cast< char * >(device_name.c_str()),
-                                    const_cast< char * >(protocol_stack_name.c_str()),
-                                    /* start_of_selection = */ 1, buffer, 256, &end_of_selection,
-                                    &error_code) != 0) {
+  if (VCS_GetInterfaceNameSelection(
+          const_cast<char *>(device_name.c_str()), const_cast<char *>(protocol_stack_name.c_str()),
+          /* start_of_selection = */ 1, buffer, 256, &end_of_selection, &error_code) != 0) {
     interface_names.push_back(buffer);
     while (end_of_selection == 0) {
-      if (VCS_GetInterfaceNameSelection(const_cast< char * >(device_name.c_str()),
-                                        const_cast< char * >(protocol_stack_name.c_str()),
+      if (VCS_GetInterfaceNameSelection(const_cast<char *>(device_name.c_str()),
+                                        const_cast<char *>(protocol_stack_name.c_str()),
                                         /* start_of_selection = */ 0, buffer, 256,
                                         &end_of_selection, &error_code) != 0) {
         interface_names.push_back(buffer);
@@ -80,25 +80,24 @@ getInterfaceNameSelection(const std::string &device_name, const std::string &pro
   return ResultSV::success(interface_names);
 }
 
-static inline Result< std::vector< std::string > >
-getPortNameSelection(const std::string &device_name, const std::string &protocol_stack_name,
-                     const std::string &interface_name) {
-  typedef Result< std::vector< std::string > > ResultSV;
+static inline Result<std::vector<std::string>>
+get_port_name_selection(const std::string &device_name, const std::string &protocol_stack_name,
+                        const std::string &interface_name) {
+  typedef Result<std::vector<std::string>> ResultSV;
   char buffer[256];
   int end_of_selection; // BOOL
   unsigned int error_code;
-  std::vector< std::string > port_names;
+  std::vector<std::string> port_names;
 
-  if (VCS_GetPortNameSelection(const_cast< char * >(device_name.c_str()),
-                               const_cast< char * >(protocol_stack_name.c_str()),
-                               const_cast< char * >(interface_name.c_str()),
-                               /* start_of_selection = */ 1, buffer, 256, &end_of_selection,
-                               &error_code) != 0) {
+  if (VCS_GetPortNameSelection(
+          const_cast<char *>(device_name.c_str()), const_cast<char *>(protocol_stack_name.c_str()),
+          const_cast<char *>(interface_name.c_str()),
+          /* start_of_selection = */ 1, buffer, 256, &end_of_selection, &error_code) != 0) {
     port_names.push_back(buffer);
     while (end_of_selection == 0) {
-      if (VCS_GetPortNameSelection(const_cast< char * >(device_name.c_str()),
-                                   const_cast< char * >(protocol_stack_name.c_str()),
-                                   const_cast< char * >(interface_name.c_str()),
+      if (VCS_GetPortNameSelection(const_cast<char *>(device_name.c_str()),
+                                   const_cast<char *>(protocol_stack_name.c_str()),
+                                   const_cast<char *>(interface_name.c_str()),
                                    /* start_of_selection = */ 0, buffer, 256, &end_of_selection,
                                    &error_code) != 0) {
         port_names.push_back(buffer);
@@ -109,38 +108,37 @@ getPortNameSelection(const std::string &device_name, const std::string &protocol
   return ResultSV::success(port_names);
 }
 
-static inline Result< void > resetPortNameSelection(const std::string &device_name,
-                                                    const std::string &protocol_stack_name,
-                                                    const std::string &interface_name) {
-  typedef Result< void > ResultV;
+static inline Result<void> reset_port_name_selection(const std::string &device_name,
+                                                     const std::string &protocol_stack_name,
+                                                     const std::string &interface_name) {
+  typedef Result<void> ResultV;
   unsigned int error_code;
-  return VCS_ResetPortNameSelection(const_cast< char * >(device_name.c_str()),
-                                    const_cast< char * >(protocol_stack_name.c_str()),
-                                    const_cast< char * >(interface_name.c_str()), &error_code) != 0
+  return (VCS_ResetPortNameSelection(const_cast<char *>(device_name.c_str()),
+                                     const_cast<char *>(protocol_stack_name.c_str()),
+                                     const_cast<char *>(interface_name.c_str()), &error_code) != 0)
              ? ResultV::success()
              : ResultV::error(error_code);
 }
 
-static inline Result< std::vector< unsigned int > >
-getBaudrateList(const std::string &device_name, const std::string &protocol_stack_name,
-                const std::string &interface_name, const std::string &port_name) {
-  typedef Result< std::vector< unsigned int > > ResultUIV;
+static inline Result<std::vector<unsigned int>>
+get_baudrate_list(const std::string &device_name, const std::string &protocol_stack_name,
+                  const std::string &interface_name, const std::string &port_name) {
+  typedef Result<std::vector<unsigned int>> ResultUIV;
   unsigned int baudrate;
   int end_of_selection; // BOOL
   unsigned int error_code;
-  std::vector< unsigned int > baudrates;
+  std::vector<unsigned int> baudrates;
 
   if (VCS_GetBaudrateSelection(
-          const_cast< char * >(device_name.c_str()),
-          const_cast< char * >(protocol_stack_name.c_str()),
-          const_cast< char * >(interface_name.c_str()), const_cast< char * >(port_name.c_str()),
+          const_cast<char *>(device_name.c_str()), const_cast<char *>(protocol_stack_name.c_str()),
+          const_cast<char *>(interface_name.c_str()), const_cast<char *>(port_name.c_str()),
           /* start_of_selection = */ 1, &baudrate, &end_of_selection, &error_code) != 0) {
     baudrates.push_back(baudrate);
     while (end_of_selection == 0) {
       if (VCS_GetBaudrateSelection(
-              const_cast< char * >(device_name.c_str()),
-              const_cast< char * >(protocol_stack_name.c_str()),
-              const_cast< char * >(interface_name.c_str()), const_cast< char * >(port_name.c_str()),
+              const_cast<char *>(device_name.c_str()),
+              const_cast<char *>(protocol_stack_name.c_str()),
+              const_cast<char *>(interface_name.c_str()), const_cast<char *>(port_name.c_str()),
               /* start_of_selection = */ 0, &baudrate, &end_of_selection, &error_code) != 0) {
         baudrates.push_back(baudrate);
       }

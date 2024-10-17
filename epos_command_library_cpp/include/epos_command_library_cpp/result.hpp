@@ -1,148 +1,166 @@
 #ifndef EPOS_COMMAND_LIBRARY_CPP_RESULT_HPP
 #define EPOS_COMMAND_LIBRARY_CPP_RESULT_HPP
 
+#include <optional>
+#include <sstream>
 #include <string>
+#include <variant>
 
 #include <epos_command_library/Definitions.h>
 #include <epos_command_library_cpp/exception.hpp>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/optional.hpp>
-
 namespace epos_command_library_cpp {
-
-// ==================================================
-// base class wrapping epos command lib's error code
-
-class ResultBase {
-public:
-  virtual ~ResultBase() {}
-
-  virtual bool isError() const = 0;
-
-  virtual bool isSuccess() const = 0;
-
-  unsigned int errorCode() const {
-    if (isSuccess()) {
-      throw NoErrorCodeException("No error code");
-    }
-    return error_code_;
-  }
-
-  std::string errorInfo() const {
-    char info[256];
-    if (VCS_GetErrorInfo(errorCode(), info, 256) == 0) {
-      throw NoErrorInfoException("No info for the error code '" +
-                                 boost::lexical_cast< std::string >(error_code_) + "'");
-    }
-    return info;
-  }
-
-protected:
-  // allow to construct only to child classes
-  ResultBase() {}
-
-protected:
-  unsigned int error_code_;
-};
 
 // ==========================================
 // utility class holding value or error code
 
-template < typename T > class Result : public ResultBase {
+template <typename T> class Result {
 public:
-  typedef T Value;
+  using Value = T;
 
-  virtual ~Result() {}
+  // ==========
+  // observers
 
-  bool isError() const override { return value_ == boost::none; }
+  bool is_success() const { return error_or_value_.index() == 2; }
 
-  bool isSuccess() const override { return value_ != boost::none; }
+  bool is_error() const { return error_or_value_.index() == 1; }
 
-  Value &unwrap() {
-    if (isError()) {
-      throw NoValueException(errorInfo());
+  // ===================
+  // accessors to value
+
+  Value &value() {
+    if (is_error()) {
+      throw NoValueException(error_info());
     }
-    return *value_;
+    return std::get<1>(error_or_value_);
   }
 
-  const Value &unwrap() const {
-    if (isError()) {
-      throw NoValueException(errorInfo());
+  const Value &value() const {
+    if (is_error()) {
+      throw NoValueException(error_info());
     }
-    return *value_;
+    return std::get<1>(error_or_value_);
   }
 
-  Value &operator*() { return unwrap(); }
+  Value &operator*() { return value(); }
 
-  const Value &operator*() const { return unwrap(); }
+  const Value &operator*() const { return value(); }
 
-  Value *operator->() { return &unwrap(); }
+  Value *operator->() { return &value(); }
 
-  const Value *operator->() const { return &unwrap(); }
+  const Value *operator->() const { return &value(); }
 
-  // ================
-  // factory methods
+  // ========================
+  // accessors to error code
 
-  static Result< T > success(const T &value) {
-    Result< T > result;
-    result.value_ = value;
+  unsigned int error_code() const {
+    if (is_success()) {
+      throw NoErrorCodeException("No error code");
+    }
+    return std::get<0>(error_or_value_);
+  }
+
+  std::string error_info() const {
+    const unsigned int code = error_code();
+    char info[256];
+    if (VCS_GetErrorInfo(code, info, 256) == 0) {
+      std::ostringstream msg;
+      msg << "No info for the error code (" << code << ")";
+      throw NoErrorInfoException(msg.str());
+    }
+    return info;
+  }
+
+  // ========================================================================
+  // factory methods (only way to create instance as constructor is private)
+
+  static Result<T> success(const T &value) {
+    Result<T> result;
+    result.error_or_value_.template emplace<1>(value);
     return result;
   }
 
-  static Result< T > error(const unsigned int error_code) {
-    Result< T > result;
-    result.error_code_ = error_code;
+  static Result<T> success(T &&value) {
+    Result<T> result;
+    result.error_or_value_.template emplace<1>(value);
+    return result;
+  }
+
+  static Result<T> error(const unsigned int error_code) {
+    Result<T> result;
+    result.error_or_value_.template emplace<0>(error_code);
     return result;
   }
 
 private:
-  Result() {}
+  Result() = default;
 
 private:
-  boost::optional< T > value_;
+  std::variant<unsigned int, Value> error_or_value_;
 };
 
-// void specialization
-template <> class Result< void > : public ResultBase {
+// ============================
+// specialization for T = void
+
+template <> class Result<void> {
 public:
-  typedef void Value;
+  // ==========
+  // observers
 
-  virtual ~Result() {}
+  bool is_success() const { return !error_code_.has_value(); }
 
-  bool isError() const override { return is_error_; }
+  bool is_error() const { return error_code_.has_value(); }
 
-  bool isSuccess() const override { return !is_error_; }
+  // ==========
+  // unwrapper
 
-  void unwrap() const {
-    if (isError()) {
-      throw NoValueException(errorInfo());
+  void operator*() const {
+    if (is_error()) {
+      throw NoValueException(error_info());
     }
   }
 
-  void operator*() const { unwrap(); }
+  // ========================
+  // accessors to error code
 
-  // ================
-  // factory methods
+  unsigned int error_code() const {
+    if (is_success()) {
+      throw NoErrorCodeException("No error code");
+    }
+    return error_code_.value();
+  }
 
-  static Result< void > success() {
-    Result< void > result;
-    result.is_error_ = false;
+  std::string error_info() const {
+    const unsigned int code = error_code();
+    char info[256];
+    if (VCS_GetErrorInfo(code, info, 256) == 0) {
+      std::ostringstream msg;
+      msg << "No info for the error code (" << code << ")";
+      throw NoErrorInfoException(msg.str());
+    }
+    return info;
+  }
+
+  // ========================================================================
+  // factory methods (only way to create instance as constructor is private)
+
+  static Result<void> success() {
+    Result<void> result;
+    result.error_code_ = std::nullopt;
     return result;
   }
 
-  static Result< void > error(const unsigned int error_code) {
-    Result< void > result;
-    result.is_error_ = true;
-    result.error_code_ = error_code;
+  static Result<void> error(const unsigned int error_code) {
+    Result<void> result;
+    result.error_code_.emplace(error_code);
     return result;
   }
 
 private:
-  Result() {}
+  Result() = default;
 
 private:
-  bool is_error_;
+  std::optional<unsigned int> error_code_;
 };
 } // namespace epos_command_library_cpp
 
