@@ -33,9 +33,7 @@ install(
   DESTINATION include)
 install(
   TARGETS list_nodes
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  RUNTIME DESTINATION lib/epos_command_library_cpp)
 
 # TODO: declare tests here
 
