@@ -45,9 +45,9 @@ install(
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
-# install(
-#   DIRECTORY config launch urdf
-#   DESTINATION share/layered_hardware_epos)
+install(
+  DIRECTORY examples
+  DESTINATION share/layered_hardware_epos)
 
 # TODO: declare tests here
 
