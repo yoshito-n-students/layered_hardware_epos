@@ -4,7 +4,7 @@ project(epos_command_library)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-# locate library files in this package
+# locate library's directory based on prosessor type
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   set(IMPORTED_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/lib/intel/x86_64)
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86"
@@ -22,30 +22,27 @@ elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
 else()
   message(FATAL_ERROR "Unsupported processor type: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
-set(
-  IMPORTED_LIBRARY_FILES
-  ${IMPORTED_LIBRARY_DIR}/libftd2xx.so
-  ${IMPORTED_LIBRARY_DIR}/libftd2xx.so.1.4.8
-  ${IMPORTED_LIBRARY_DIR}/libEposCmd.so
-  ${IMPORTED_LIBRARY_DIR}/libEposCmd.so.6.8.1.0)
 
 # import libraries
-add_library(ftd2xx SHARED IMPORTED)
-set_target_properties(
-  ftd2xx PROPERTIES
-  IMPORTED_LOCATION ${IMPORTED_LIBRARY_DIR}/libftd2xx.so)
 add_library(EposCmd SHARED IMPORTED)
 set_target_properties(
   EposCmd PROPERTIES
-  IMPORTED_LOCATION ${IMPORTED_LIBRARY_DIR}/libEposCmd.so)
+  IMPORTED_LOCATION ${IMPORTED_LIBRARY_DIR}/libEposCmd.so.6.8.1.0)
+add_library(ftd2xx SHARED IMPORTED)
+set_target_properties(
+  ftd2xx PROPERTIES
+  IMPORTED_LOCATION ${IMPORTED_LIBRARY_DIR}/libftd2xx.so.1.4.8)
 
-# install headers & libraries
+# install headers & libraries,
+# then generates unversioned symlinks (i.e. libEposCmd.so & libftd2xx.so)
 install(
   DIRECTORY include/
   DESTINATION include)
 install(
-  FILES ${IMPORTED_LIBRARY_FILES}
+  IMPORTED_RUNTIME_ARTIFACTS EposCmd ftd2xx
   DESTINATION lib)
+install(
+  CODE "execute_process(COMMAND ldconfig -n \"${CMAKE_INSTALL_PREFIX}/lib\")")
 
 # export headers & libraries to packages which depend on this package
 ament_export_include_directories(include)
