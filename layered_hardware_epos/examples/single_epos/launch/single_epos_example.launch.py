@@ -2,10 +2,19 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
-
 from launch_ros.substitutions import FindPackageShare
 
+
 def generate_launch_description():
+    # Declare base launch description
+    base_launch = PythonLaunchDescriptionSource([
+        PathJoinSubstitution([
+            FindPackageShare("layered_hardware"),
+            "examples/single_actuator/launch",
+            "single_actuator_example.launch.py"
+        ])
+    ])
+
     # Declare custom arguments
     robot_description_path = PathJoinSubstitution(
         [
@@ -18,13 +27,7 @@ def generate_launch_description():
     # Include base launch description with custom arguments
     return LaunchDescription([
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                PathJoinSubstitution([
-                    FindPackageShare("layered_hardware"),
-                    "examples/single_actuator/launch",
-                    "single_actuator_example.launch.py"
-                ])
-            ]),
+            base_launch,
             launch_arguments={
                 "robot_description_path": robot_description_path,
                 "gui": "false"
