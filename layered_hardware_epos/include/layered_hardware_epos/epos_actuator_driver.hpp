@@ -1,5 +1,5 @@
-#ifndef LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_HPP
-#define LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_HPP
+#ifndef LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_DRIVER_HPP
+#define LAYERED_HARDWARE_EPOS_EPOS_ACTUATOR_DRIVER_HPP
 
 #include <cstdint>
 #include <memory>
@@ -32,9 +32,10 @@
 
 namespace layered_hardware_epos {
 
-class EposActuator {
+class EposActuatorDriver {
 public:
-  EposActuator(const std::string &name, const YAML::Node &params, const eclc::Device &device) {
+  EposActuatorDriver(const std::string &name, const YAML::Node &params,
+                     const eclc::Device &device) {
     // parse parameters for this actuator
     unsigned short id;
     int count_per_revolution;
@@ -68,7 +69,7 @@ public:
     }
   }
 
-  virtual ~EposActuator() {
+  virtual ~EposActuatorDriver() {
     // finalize the present mode
     switch_operation_modes(/* new_mode = */ nullptr);
   }
@@ -97,7 +98,7 @@ public:
     if (active_bound_ifaces.size() <= 1) {
       return hi::return_type::OK;
     } else { // active_bound_ifaces.size() >= 2
-      LHE_ERROR("EposActuator::prepare_command_mode_switch(): "
+      LHE_ERROR("EposActuatorDriver::prepare_command_mode_switch(): "
                 "Reject mode switching of \"%s\" actuator "
                 "because %zd bound interfaces are about to be active",
                 context_->name.c_str(), active_bound_ifaces.size());
@@ -109,7 +110,7 @@ public:
     // check how many interfaces associated with actuator command mode are active
     const std::vector<std::size_t> active_bound_ifaces = active_interfaces.find(bound_interfaces_);
     if (active_bound_ifaces.size() >= 2) {
-      LHE_ERROR("EposActuator::perform_command_mode_switch(): "
+      LHE_ERROR("EposActuatorDriver::perform_command_mode_switch(): "
                 "Could not switch mode of \"%s\" actuator "
                 "because %zd bound interfaces are active",
                 context_->name.c_str(), bound_interfaces_.size());
@@ -169,7 +170,7 @@ private:
     }
     // stop present mode
     if (present_mode_) {
-      LHE_INFO("EposActuator::switch_operation_modes(): "
+      LHE_INFO("EposActuatorDriver::switch_operation_modes(): "
                "Stopping \"%s\" operation mode for \"%s\" actuator",
                present_mode_->get_name().c_str(), context_->name.c_str());
       present_mode_->stopping();
@@ -177,7 +178,7 @@ private:
     }
     // start new mode
     if (new_mode) {
-      LHE_INFO("EposActuator::switch_operation_modes(): "
+      LHE_INFO("EposActuatorDriver::switch_operation_modes(): "
                "Starting \"%s\" operation mode for \"%s\" actuator",
                new_mode->get_name().c_str(), context_->name.c_str());
       new_mode->starting();
