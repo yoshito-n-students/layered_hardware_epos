@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>epos_command_library</depend>
-  <depend>libboost-program-options</depend>
+  <depend>libboost-program-options-dev</depend>
 
   <!-- <test_depend>ament_cmake_gtest</test_depend> -->
   <!-- <test_depend>ament_lint_auto</test_depend> -->
