@@ -15,8 +15,9 @@ find_package(hardware_interface REQUIRED)
 find_package(layered_hardware REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+# yaml_cpp_vendor builds yaml-cpp if not installed
+find_package(yaml_cpp_vendor REQUIRED)
 
-## Find system dependencies
 find_package(yaml-cpp REQUIRED)
 
 ## Declare a C++ library
@@ -35,7 +36,8 @@ ament_target_dependencies(
   hardware_interface
   layered_hardware
   pluginlib
-  rclcpp)
+  rclcpp
+  yaml_cpp_vendor)
 target_link_libraries(
   layered_hardware_epos_plugins
   ${YAML_CPP_LIBRARIES})

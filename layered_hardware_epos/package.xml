@@ -9,16 +9,13 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- ROS dependencies -->
   <depend>controller_interface</depend>
   <depend>epos_command_library_cpp</depend>
   <depend>hardware_interface</depend>
   <depend>layered_hardware</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-
-  <!-- System dependencies -->
-  <depend>yaml-cpp</depend>
+  <depend>yaml_cpp_vendor</depend>
 
   <!-- <test_depend>ament_cmake_gtest</test_depend> -->
   <!-- <test_depend>ament_lint_auto</test_depend> -->
