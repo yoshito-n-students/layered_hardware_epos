@@ -9,7 +9,10 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- ROS dependencies -->
   <depend>epos_command_library</depend>
+
+  <!-- System dependencies -->
   <depend>libboost-program-options-dev</depend>
 
   <!-- <test_depend>ament_cmake_gtest</test_depend> -->
