@@ -46,7 +46,7 @@ ___<layer_name>.actuators.<actuator_name>.operation_mode_map___ (map, required)
 * possible operation mode names are 'clear_falut', 'current', 'disable', 'position', 'profile_position', 'profile_velocity', 'reset' & 'velocity'
 
 #### Example of parameter description
-```xml
+```yaml
 <param name="example_epos_actuator_layer">
     device: EPOS4
     protocol_stack: MAXON SERIAL V2
