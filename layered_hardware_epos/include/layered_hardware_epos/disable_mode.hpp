@@ -23,8 +23,7 @@ public:
     try {
       *context_->node.set_disable_state();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("DisableMode::starting(): %s: %s", //
-                get_display_name(*context_).c_str(), error.what());
+      lhe_error("DisableMode::starting(): %s: %s", get_display_name(*context_), error);
     }
   }
 
@@ -34,7 +33,7 @@ public:
       context_->vel = *context_->node.get_velocity();
       context_->eff = *context_->node.get_torque();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("DisableMode::read(): %s: %s", get_display_name(*context_).c_str(), error.what());
+      lhe_error("DisableMode::read(): %s: %s", get_display_name(*context_), error);
     }
   }
 

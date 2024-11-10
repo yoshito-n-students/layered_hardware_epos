@@ -22,7 +22,7 @@ public:
     try {
       *context_->node.reset_device();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("ResetMode::starting(): %s: %s", get_display_name(*context_).c_str(), error.what());
+      lhe_error("ResetMode::starting(): %s: %s", get_display_name(*context_), error);
     }
   }
 

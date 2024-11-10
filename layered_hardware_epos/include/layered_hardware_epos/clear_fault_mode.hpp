@@ -22,8 +22,7 @@ public:
     try {
       *context_->node.clear_fault();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("ClearFaultMode::starting(): %s: %s", //
-                get_display_name(*context_).c_str(), error.what());
+      lhe_error("ClearFaultMode::starting(): %s: %s", get_display_name(*context_), error);
     }
   }
 

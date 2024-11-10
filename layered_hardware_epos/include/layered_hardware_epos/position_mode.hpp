@@ -32,8 +32,7 @@ public:
 
       has_started_ = true;
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("PositionMode::starting(): %s: %s", //
-                get_display_name(*context_).c_str(), error.what());
+      lhe_error("PositionMode::starting(): %s: %s", get_display_name(*context_), error);
       has_started_ = false;
     }
   }
@@ -48,7 +47,7 @@ public:
       context_->vel = *context_->node.get_velocity();
       context_->eff = *context_->node.get_torque();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("PositionMode::read(): %s: %s", get_display_name(*context_).c_str(), error.what());
+      lhe_error("PositionMode::read(): %s: %s", get_display_name(*context_), error);
     }
   }
 
@@ -63,7 +62,7 @@ public:
         prev_pos_cmd_ = context_->pos_cmd;
       }
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("PositionMode::write(): %s: %s", get_display_name(*context_).c_str(), error.what());
+      lhe_error("PositionMode::write(): %s: %s", get_display_name(*context_), error);
     }
   }
 
@@ -71,8 +70,7 @@ public:
     try {
       *context_->node.set_disable_state();
     } catch (const eclc::Exception &error) {
-      LHE_ERROR("PositionMode::stopping(): %s: %s", //
-                get_display_name(*context_).c_str(), error.what());
+      lhe_error("PositionMode::stopping(): %s: %s", get_display_name(*context_), error);
     }
   }
 

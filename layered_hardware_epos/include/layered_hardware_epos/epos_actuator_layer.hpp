@@ -38,7 +38,7 @@ public:
     // find parameter group for this layer
     const auto params_it = hardware_info.hardware_parameters.find(layer_name);
     if (params_it == hardware_info.hardware_parameters.end()) {
-      LHE_ERROR("EposActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name.c_str());
+      lhe_error("EposActuatorLayer::on_init(): \"%s\" parameter is missing", layer_name);
       return CallbackReturn::ERROR;
     }
 
@@ -61,25 +61,25 @@ public:
         ator_params.emplace_back(name_param_pair.second);
       }
     } catch (const YAML::Exception &error) {
-      LHE_ERROR("EposActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
-                error.what(), layer_name.c_str());
+      lhe_error("EposActuatorLayer::on_init(): %s (on parsing \"%s\" parameter)", //
+                error, layer_name);
       return CallbackReturn::ERROR;
     }
 
     // open EPOS device
     auto device = eclc::Device::open(device_name, protocol_stack_name, interface_name, port_name);
     if (device.is_error()) {
-      LHE_ERROR("EposActuatorLayer::on_init(): Failed to open an EPOS device: %s",
-                device.error_info().c_str());
+      lhe_error("EposActuatorLayer::on_init(): Failed to open an EPOS device: %s",
+                device.error_info());
       return CallbackReturn::ERROR;
     }
 
     // configure the epos device
     const auto result_setting = device->set_protocol_stack_settings(baudrate, timeout);
     if (result_setting.is_error()) {
-      LHE_ERROR("EposActuatorLayer::on_init(): Failed to set protocol stack settings of an EPOS "
-                "device: %s",
-                result_setting.error_info().c_str());
+      lhe_error("EposActuatorLayer::on_init(): "
+                "Failed to set protocol stack settings of an EPOS device: %s",
+                result_setting.error_info());
       return CallbackReturn::ERROR;
     }
 
@@ -88,12 +88,11 @@ public:
       try {
         drivers_.emplace_back(new EposActuatorDriver(ator_names[i], ator_params[i], *device));
       } catch (const std::runtime_error &error) {
-        LHE_ERROR("EposActuatorLayer::on_init(): Failed to create driver for \"%s\" actuator",
-                  ator_names[i].c_str());
+        lhe_error("EposActuatorLayer::on_init(): Failed to create driver for \"%s\" actuator",
+                  ator_names[i]);
         return CallbackReturn::ERROR;
       }
-      LHE_INFO("EposActuatorLayer::on_init(): Initialized the actuator \"%s\"",
-               ator_names[i].c_str());
+      lhe_info("EposActuatorLayer::on_init(): Initialized the actuator \"%s\"", ator_names[i]);
     }
 
     return CallbackReturn::SUCCESS;
